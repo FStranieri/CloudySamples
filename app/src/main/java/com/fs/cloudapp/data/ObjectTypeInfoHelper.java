@@ -18,7 +18,7 @@ import java.util.List;
  */
 public final class ObjectTypeInfoHelper {
     private static final int FORMAT_VERSION = 2;
-    private static final int OBJECT_TYPE_VERSION = 6;
+    private static final int OBJECT_TYPE_VERSION = 7;
 
     public static ObjectTypeInfo getObjectTypeInfo() {
         ObjectTypeInfo objectTypeInfo = new ObjectTypeInfo();
@@ -26,6 +26,7 @@ public final class ObjectTypeInfoHelper {
         objectTypeInfo.setObjectTypeVersion(OBJECT_TYPE_VERSION);
         List<Class<? extends CloudDBZoneObject>> objectTypeList = new ArrayList<>();
         Collections.addAll(objectTypeList, user_push_tokens.class);
+        Collections.addAll(objectTypeList, user_messages.class);
         objectTypeInfo.setObjectTypes(objectTypeList);
         return objectTypeInfo;
     }
