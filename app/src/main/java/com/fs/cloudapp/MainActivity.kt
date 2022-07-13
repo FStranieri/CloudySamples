@@ -2,9 +2,11 @@ package com.fs.cloudapp
 
 import android.os.Bundle
 import android.util.Log
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import com.fs.cloudapp.composables.BindChat
 import com.fs.cloudapp.data.user_push_tokens
@@ -15,6 +17,7 @@ import com.huawei.hms.common.ApiException
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             val cloudDBViewModel: CloudDBViewModel by viewModels()
             cloudDBViewModel.initAGConnectCloudDB(this)
@@ -27,6 +30,12 @@ class MainActivity : ComponentActivity() {
                 BindChat(cloudDBViewModel = cloudDBViewModel)
 
                 cloudDBViewModel.getAllMessages()
+            }
+            
+            DisposableEffect(key1 = cloudDBViewModel) {
+                onDispose {
+                    cloudDBViewModel.closeDB()
+                }
             }
         }
     }

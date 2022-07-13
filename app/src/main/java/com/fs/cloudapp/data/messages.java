@@ -16,46 +16,38 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * Definition of ObjectType user_messages.
+ * Definition of ObjectType messages.
  *
- * @since 2022-07-11
+ * @since 2022-07-13
  */
 @PrimaryKeys({"id"})
-public final class user_messages extends CloudDBZoneObject implements Serializable {
-    @NotNull
-    @DefaultValue(stringValue = "ciao")
-    private String text;
-
-    private String id;
+public final class messages extends CloudDBZoneObject implements Serializable {
+    private Long id;
 
     @NotNull
-    @DefaultValue(stringValue = "id")
+    @DefaultValue(stringValue = "testuser")
     private String user_id;
+
+    @NotNull
+    @DefaultValue(stringValue = "test")
+    private String text;
 
     @NotNull
     @DefaultValue(intValue = 0)
     private Integer type;
 
-    public user_messages() {
-        super(user_messages.class);
-        this.text = "ciao";
-        this.user_id = "id";
+    public messages() {
+        super(messages.class);
+        this.user_id = "testuser";
+        this.text = "test";
         this.type = 0;
     }
 
-    public void setText(String text) {
-        this.text = text;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setId(String id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public String getId() {
+    public Long getId() {
         return id;
     }
 
@@ -65,6 +57,14 @@ public final class user_messages extends CloudDBZoneObject implements Serializab
 
     public String getUser_id() {
         return user_id;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public String getText() {
+        return text;
     }
 
     public void setType(Integer type) {

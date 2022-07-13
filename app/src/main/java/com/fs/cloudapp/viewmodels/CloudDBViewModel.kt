@@ -8,7 +8,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.fs.cloudapp.data.ObjectTypeInfoHelper
-import com.fs.cloudapp.data.user_messages
+import com.fs.cloudapp.data.messages
 import com.fs.cloudapp.data.user_push_tokens
 import com.huawei.agconnect.AGCRoutePolicy
 import com.huawei.agconnect.AGConnectInstance
@@ -19,32 +19,40 @@ import com.huawei.agconnect.cloud.database.*
 import com.huawei.agconnect.cloud.database.exceptions.AGConnectCloudDBException
 import java.lang.Exception
 
+typealias Message = messages
+
 class CloudDBViewModel : ViewModel() {
 
-    lateinit var DBInstance: AGConnectCloudDB
-    var DBZone: CloudDBZone? = null
+    private lateinit var DBInstance: AGConnectCloudDB
+    private var DBZone: CloudDBZone? = null
 
-    private var userID: String = ""
+    var userID: String = ""
+    private var messageId: Long = 0L
 
     private var output: MutableLiveData<String> = MutableLiveData()
-    private var messages: MutableLiveData<List<user_messages>> = MutableLiveData()
+    private var messages: MutableLiveData<List<Message>> = MutableLiveData()
     private var failureOutput: MutableLiveData<Exception> = MutableLiveData()
     private var loadingProgress: MutableState<Boolean> = mutableStateOf(false)
 
     var canRegisterPushToken: MutableState<Boolean> = mutableStateOf(false)
         private set
 
-    private val mSnapshotListener = OnSnapshotListener<user_messages> { cloudDBZoneSnapshot, e ->
+    private val mSnapshotListener = OnSnapshotListener<Message> { cloudDBZoneSnapshot, e ->
         if (e != null) {
             Log.w(TAG, "onSnapshot: " + e.message)
             return@OnSnapshotListener
         }
         val snapshotObjects = cloudDBZoneSnapshot.snapshotObjects
-        val messagesList: MutableList<user_messages> = ArrayList()
+        val messagesList: MutableList<Message> = ArrayList()
         try {
             if (snapshotObjects != null) {
                 while (snapshotObjects.hasNext()) {
                     val message = snapshotObjects.next()
+
+                    if (messageId <= message.id){
+                        messageId = message.id
+                    }
+
                     messagesList.add(message)
                 }
             }
@@ -110,8 +118,10 @@ class CloudDBViewModel : ViewModel() {
     }
 
     fun sendMessage(text: String) {
-        val message = user_messages().apply {
-            this.id = "34"
+        messageId++
+
+        val message = Message().apply {
+            this.id = messageId
             this.text = text
             this.user_id = userID
             this.type = 0
@@ -127,26 +137,34 @@ class CloudDBViewModel : ViewModel() {
     }
 
     fun getAllMessages() {
-        val query = CloudDBZoneQuery.where(user_messages::class.java).equalTo("type", 0)
+        val query = CloudDBZoneQuery.where(Message::class.java).equalTo("type", 0)
         val queryTask = this.DBZone!!.executeQuery(
             query,
-            CloudDBZoneQuery.CloudDBZoneQueryPolicy.POLICY_QUERY_FROM_CLOUD_ONLY)
-        queryTask.addOnSuccessListener {snapshot -> processQueryResult(snapshot) }
+            CloudDBZoneQuery.CloudDBZoneQueryPolicy.POLICY_QUERY_FROM_CLOUD_ONLY
+        )
+        queryTask.addOnSuccessListener { snapshot -> processQueryResult(snapshot) }
             .addOnFailureListener {
                 failureOutput.value = it
             }
 
-        this.DBZone!!.subscribeSnapshot(query,
-            CloudDBZoneQuery.CloudDBZoneQueryPolicy.POLICY_QUERY_FROM_CLOUD_ONLY, mSnapshotListener)
+        this.DBZone!!.subscribeSnapshot(
+            query,
+            CloudDBZoneQuery.CloudDBZoneQueryPolicy.POLICY_QUERY_FROM_CLOUD_ONLY, mSnapshotListener
+        )
     }
 
-    private fun processQueryResult(snapshot: CloudDBZoneSnapshot<user_messages>) {
+    private fun processQueryResult(snapshot: CloudDBZoneSnapshot<Message>) {
         val messagesCursor = snapshot.snapshotObjects
-        val messagesList: MutableList<user_messages> = ArrayList()
+        val messagesList: MutableList<messages> = ArrayList()
         try {
             while (messagesCursor.hasNext()) {
-                val bookInfo = messagesCursor.next()
-                messagesList.add(bookInfo)
+                val message = messagesCursor.next()
+
+                if (messageId <= message.id){
+                    messageId = message.id
+                }
+
+                messagesList.add(message)
             }
         } catch (e: AGConnectCloudDBException) {
             Log.w(TAG, "processQueryResult: " + e.message)
@@ -169,12 +187,18 @@ class CloudDBViewModel : ViewModel() {
         this.failureOutput.value = null
     }
 
-    fun getChatMessages(): LiveData<List<user_messages>> {
+    fun getChatMessages(): LiveData<List<Message>> {
         return this.messages
     }
 
     fun getLoadingProgress(): MutableState<Boolean> {
         return loadingProgress
+    }
+
+    fun closeDB() {
+        if (this::DBInstance.isInitialized && this.DBZone != null) {
+            this.DBInstance.closeCloudDBZone(this.DBZone)
+        }
     }
 
     companion object {
