@@ -9,6 +9,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Send
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -37,7 +39,6 @@ fun BindChat(
     ConstraintLayout(Modifier.fillMaxSize()) {
         val (title,
             chatList,
-            sendButton,
             inputMessage) = createRefs()
         val messagesValue by cloudDBViewModel.getChatMessages().observeAsState()
         val chatMessagesFailure by cloudDBViewModel.getFailureOutput().observeAsState()
@@ -47,9 +48,6 @@ fun BindChat(
             cloudDBViewModel.resetFailureOutput()
         }
 
-        val scrollState = rememberScrollState(0)
-        val transScrollState = rememberScrollState(0)
-
         Text(
             modifier = Modifier
                 .constrainAs(title) {
@@ -58,32 +56,17 @@ fun BindChat(
                     width = Dimension.wrapContent
                     height = Dimension.wrapContent
                 }
-                .padding(16.dp),
+                .padding(8.dp),
             text = stringResource(R.string.chat),
             style = TextStyle(fontStyle = FontStyle.Italic),
             fontWeight = FontWeight.Bold
-        )
-
-        var messageText by remember { mutableStateOf("") }
-
-        OutlinedTextField(
-            modifier = Modifier.constrainAs(inputMessage) {
-                bottom.linkTo(parent.bottom)
-                start.linkTo(parent.start)
-                end.linkTo(sendButton.start)
-                width = Dimension.fillToConstraints
-                height = Dimension.preferredWrapContent
-            },
-            value = messageText,
-            onValueChange = { messageText = it },
-            label = { Text(stringResource(R.string.enter_text_label)) }
         )
 
         Box(
             modifier = Modifier
                 .constrainAs(chatList) {
                     top.linkTo(title.bottom)
-                    bottom.linkTo(parent.bottom)
+                    bottom.linkTo(inputMessage.top)
                     end.linkTo(parent.end)
                     start.linkTo(parent.start)
                     width = Dimension.fillToConstraints
@@ -93,7 +76,6 @@ fun BindChat(
             contentAlignment = Alignment.Center
         ) {
             LazyColumn(
-                horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 messagesValue?.let { list ->
@@ -101,7 +83,8 @@ fun BindChat(
                         it
                     }) { message ->
                         if (message.user_id == cloudDBViewModel.userID) {
-                            BuildMyChatCard(message = message)
+                            //BuildMyChatCard(message = message)
+                            BuildUsersChatCard(message = message)
                         } else {
                             BuildUsersChatCard(message = message)
                         }
@@ -110,20 +93,37 @@ fun BindChat(
             }
         }
 
-        Button(modifier = Modifier.constrainAs(sendButton) {
-            bottom.linkTo(parent.bottom)
-            end.linkTo(parent.end)
-            width = Dimension.preferredWrapContent
-            height = Dimension.preferredWrapContent
-        }, onClick = {
-            cloudDBViewModel.sendMessage(messageText)
-            messageText = ""
-        })
-        {
-            Text(
-                text = stringResource(R.string.send_button)
-            )
-        }
+        var messageText by remember { mutableStateOf("") }
+
+        OutlinedTextField(
+            modifier = Modifier
+                .constrainAs(inputMessage) {
+                    bottom.linkTo(parent.bottom, 8.dp)
+                    start.linkTo(parent.start, 8.dp)
+                    end.linkTo(parent.end, 8.dp)
+                    width = Dimension.fillToConstraints
+                    height = Dimension.preferredWrapContent
+                }.then(Modifier.background(Color.White)),
+            value = messageText,
+            onValueChange = { messageText = it },
+            label = { Text(stringResource(R.string.enter_text_label))},
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedBorderColor = Color.Blue
+            ),
+            trailingIcon = {
+                if (messageText.isNotEmpty()) {
+                    IconButton(onClick = {
+                        cloudDBViewModel.sendMessage(messageText)
+                        messageText = ""
+                    }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Send,
+                            contentDescription = null
+                        )
+                    }
+                }
+            }
+        )
     }
 }
 
@@ -163,7 +163,7 @@ fun BuildUsersChatCard(message: Message) {
             },
             backgroundColor = Color.Cyan,
             elevation = 4.dp,
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(16.dp)
         ) {
             ConstraintLayout(Modifier.wrapContentWidth()) {
                 val (name, text) = createRefs()

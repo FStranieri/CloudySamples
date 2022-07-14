@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
             
             DisposableEffect(key1 = cloudDBViewModel) {
                 onDispose {
-                    cloudDBViewModel.closeDB()
+                    //cloudDBViewModel.closeDB()
                 }
             }
         }
