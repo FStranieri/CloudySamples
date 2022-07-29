@@ -8,8 +8,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
+import com.fs.cloudapp.composables.BindAccounts
 import com.fs.cloudapp.composables.BindChat
 import com.fs.cloudapp.data.user_push_tokens
+import com.fs.cloudapp.viewmodels.AuthViewModel
 import com.fs.cloudapp.viewmodels.CloudDBViewModel
 import com.huawei.hms.aaid.HmsInstanceId
 import com.huawei.hms.common.ApiException
@@ -19,19 +21,30 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
+            val authViewModel: AuthViewModel by viewModels()
             val cloudDBViewModel: CloudDBViewModel by viewModels()
-            cloudDBViewModel.initAGConnectCloudDB(this)
 
+            val loggedIn = remember { authViewModel.loggedIn }.value
             val registerPushToken = remember { cloudDBViewModel.canRegisterPushToken }.value
 
-            if (registerPushToken) {
-                getPushToken(cloudDBViewModel)
+            if (loggedIn) {
+                cloudDBViewModel.initAGConnectCloudDB(
+                    this,
+                    authViewModel.authInstance,
+                    authViewModel.getOutput().value!!
+                )
 
-                BindChat(cloudDBViewModel = cloudDBViewModel)
+                if (registerPushToken) {
+                    getPushToken(cloudDBViewModel)
 
-                cloudDBViewModel.getAllMessages()
+                    BindChat(cloudDBViewModel = cloudDBViewModel)
+
+                    cloudDBViewModel.getAllMessages()
+                }
+            } else {
+                BindAccounts(authViewModel = authViewModel)
             }
-            
+
             DisposableEffect(key1 = cloudDBViewModel) {
                 onDispose {
                     //cloudDBViewModel.closeDB()
@@ -65,7 +78,7 @@ class MainActivity : ComponentActivity() {
         Log.i(TAG, "sending token to server. token:$token")
         cloudDBViewModel.savePushToken(user_push_tokens().apply {
             setToken(token)
-            user_id = "Fra_NOVA"
+            user_id = cloudDBViewModel.userID
             platform = 0
         })
     }

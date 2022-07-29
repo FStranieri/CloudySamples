@@ -89,8 +89,19 @@ dependencies {
     // Foundation (Border, Background, Box, Image, Scroll, shapes, animations, etc.)
     implementation "androidx.compose.foundation:foundation:$compose_version"
 
+    //AUTH SERVICE
+    implementation "com.huawei.agconnect:agconnect-auth:1.7.0.300"
+    //HUAWEI ID
+    implementation "com.huawei.agconnect:agconnect-auth-huawei:1.7.0.300"
+    //FB
+    implementation "com.huawei.agconnect:agconnect-auth-facebook:1.7.0.300"
+    implementation "com.facebook.android:facebook-login:9.0.0"
+    //GOOGLE
+    implementation "com.huawei.agconnect:agconnect-auth-google:1.7.0.300"
+    implementation "com.google.android.gms:play-services-auth:20.2.0"
+
     //CLOUD DB
-    implementation 'com.huawei.agconnect:agconnect-cloud-database:1.5.2.301'
+    implementation 'com.huawei.agconnect:agconnect-cloud-database:1.5.3.300'
 
     //PUSH KIT
     implementation 'com.huawei.hms:push:6.5.0.300'

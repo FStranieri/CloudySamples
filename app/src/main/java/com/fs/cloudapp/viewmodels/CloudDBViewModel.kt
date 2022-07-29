@@ -15,6 +15,7 @@ import com.huawei.agconnect.AGConnectInstance
 import com.huawei.agconnect.AGConnectOptionsBuilder
 import com.huawei.agconnect.auth.AGCAuthException
 import com.huawei.agconnect.auth.AGConnectAuth
+import com.huawei.agconnect.auth.SignInResult
 import com.huawei.agconnect.cloud.database.*
 import com.huawei.agconnect.cloud.database.exceptions.AGConnectCloudDBException
 import java.lang.Exception
@@ -27,6 +28,8 @@ class CloudDBViewModel : ViewModel() {
     private var DBZone: CloudDBZone? = null
 
     var userID: String = ""
+        private set
+
     private var messageId: Long = 0L
 
     private var output: MutableLiveData<String> = MutableLiveData()
@@ -49,7 +52,7 @@ class CloudDBViewModel : ViewModel() {
                 while (snapshotObjects.hasNext()) {
                     val message = snapshotObjects.next()
 
-                    if (messageId <= message.id){
+                    if (messageId <= message.id) {
                         messageId = message.id
                     }
 
@@ -64,28 +67,25 @@ class CloudDBViewModel : ViewModel() {
         }
     }
 
-    fun initAGConnectCloudDB(context: Context) {
-        val authInstance = AGConnectAuth.getInstance()
+    fun initAGConnectCloudDB(
+        context: Context,
+        authInstance: AGConnectAuth,
+        credentials: SignInResult
+    ) {
+        this.userID = credentials.user.displayName
 
-        authInstance.signInAnonymously().addOnSuccessListener {
-            // onSuccess
-            val user = it.user
-            if (DBZone == null) {
-                AGConnectCloudDB.initialize(context)
-                val agcConnectOptions = AGConnectOptionsBuilder()
-                    .setRoutePolicy(AGCRoutePolicy.GERMANY)
-                    .build(context)
-                val agConnectInstance = AGConnectInstance.buildInstance(agcConnectOptions)
-                this.DBInstance = AGConnectCloudDB.getInstance(
-                    agConnectInstance,
-                    authInstance
-                )
-                this.DBInstance.createObjectType(ObjectTypeInfoHelper.getObjectTypeInfo())
-                openCloudZone()
-            }
-        }.addOnFailureListener {
-            val err = it as AGCAuthException
-            Log.e(TAG, "${err.code}: ${err.message}")
+        if (DBZone == null) {
+            AGConnectCloudDB.initialize(context)
+            val agcConnectOptions = AGConnectOptionsBuilder()
+                .setRoutePolicy(AGCRoutePolicy.GERMANY)
+                .build(context)
+            val agConnectInstance = AGConnectInstance.buildInstance(agcConnectOptions)
+            this.DBInstance = AGConnectCloudDB.getInstance(
+                agConnectInstance,
+                authInstance
+            )
+            this.DBInstance.createObjectType(ObjectTypeInfoHelper.getObjectTypeInfo())
+            openCloudZone()
         }
     }
 
@@ -160,7 +160,7 @@ class CloudDBViewModel : ViewModel() {
             while (messagesCursor.hasNext()) {
                 val message = messagesCursor.next()
 
-                if (messageId <= message.id){
+                if (messageId <= message.id) {
                     messageId = message.id
                 }
 

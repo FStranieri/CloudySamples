@@ -83,8 +83,7 @@ fun BindChat(
                         it
                     }) { message ->
                         if (message.user_id == cloudDBViewModel.userID) {
-                            //BuildMyChatCard(message = message)
-                            BuildUsersChatCard(message = message)
+                            BuildMyChatCard(message = message)
                         } else {
                             BuildUsersChatCard(message = message)
                         }

@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">CloudApp</string>
+    <string name="login_page_title">LOGIN</string>
     <string name="chat">CHAT</string>
     <string name="send_button">SEND</string>
     <string name="enter_text_label">Write here</string>
