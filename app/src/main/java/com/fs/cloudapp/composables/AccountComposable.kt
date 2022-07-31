@@ -4,10 +4,13 @@ import android.app.Activity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -27,7 +30,8 @@ import com.huawei.hms.support.hwid.ui.HuaweiIdAuthButton
 
 @Composable
 fun BindAccounts(
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    activity: Activity
 ) {
     ConstraintLayout(Modifier.fillMaxSize()) {
         val (title,
@@ -71,25 +75,19 @@ fun BindAccounts(
             })
 
         // GOOGLE LOGIN
-        AndroidView(
+        Button(
             modifier = Modifier.constrainAs(googleButton) {
                 top.linkTo(huaweiIdButton.bottom, 16.dp)
                 linkTo(start = parent.start, end = parent.end)
                 width = Dimension.wrapContent
                 height = Dimension.wrapContent
             }, // Occupy the max size in the Compose UI tree
-            factory = { context ->
-                // Creates GOOGLE Login button
-                SignInButton(context).apply {
-                    // Sets up listeners for View -> Compose communication
-                    setOnClickListener {
-                        authViewModel.login(
-                            context as Activity,
-                            AGConnectAuthCredential.Google_Provider
-                        )
-                    }
-                }
-            })
+            onClick = {
+
+                authViewModel.loginWithGoogle(activity)
+            }) {
+            Text(text = "GOOGLE LOGIN")
+        }
 
         // FACEBOOK LOGIN
         AndroidView(

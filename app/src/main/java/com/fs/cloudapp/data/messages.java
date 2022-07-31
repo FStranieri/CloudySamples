@@ -36,6 +36,8 @@ public final class messages extends CloudDBZoneObject implements Serializable {
     @DefaultValue(intValue = 0)
     private Integer type;
 
+    private Date date;
+
     public messages() {
         super(messages.class);
         this.user_id = "testuser";
@@ -73,6 +75,14 @@ public final class messages extends CloudDBZoneObject implements Serializable {
 
     public Integer getType() {
         return type;
+    }
+
+    public void setDate(Date date) {
+        this.date = date;
+    }
+
+    public Date getDate() {
+        return date;
     }
 
 }
