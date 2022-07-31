@@ -80,7 +80,7 @@ class MainActivity : ComponentActivity() {
             override fun run() {
                 try {
                     // Obtain the app ID from the agconnect-services.json file.
-                    val appId = "106551957"
+                    val appId = getString(R.string.app_id)
                     val token = HmsInstanceId.getInstance(this@MainActivity).getToken(appId, "HCM")
                     Log.i(TAG, "get token:$token")
 
