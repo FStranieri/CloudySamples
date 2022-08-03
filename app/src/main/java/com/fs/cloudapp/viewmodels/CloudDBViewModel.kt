@@ -4,23 +4,26 @@ import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.fs.cloudapp.data.ObjectTypeInfoHelper
 import com.fs.cloudapp.data.messages
 import com.fs.cloudapp.data.user_push_tokens
+import com.fs.cloudapp.data.users
 import com.huawei.agconnect.AGCRoutePolicy
 import com.huawei.agconnect.AGConnectInstance
 import com.huawei.agconnect.AGConnectOptionsBuilder
-import com.huawei.agconnect.auth.AGCAuthException
 import com.huawei.agconnect.auth.AGConnectAuth
+import com.huawei.agconnect.auth.AGConnectUser
 import com.huawei.agconnect.auth.SignInResult
 import com.huawei.agconnect.cloud.database.*
 import com.huawei.agconnect.cloud.database.exceptions.AGConnectCloudDBException
 import java.lang.Exception
 
 typealias Message = messages
+typealias User = users
 
 class CloudDBViewModel : ViewModel() {
 
@@ -37,7 +40,7 @@ class CloudDBViewModel : ViewModel() {
     private var failureOutput: MutableLiveData<Exception> = MutableLiveData()
     private var loadingProgress: MutableState<Boolean> = mutableStateOf(false)
 
-    var canRegisterPushToken: MutableState<Boolean> = mutableStateOf(false)
+    var dbReady: MutableState<Boolean> = mutableStateOf(false)
         private set
 
     private val mSnapshotListener = OnSnapshotListener<Message> { cloudDBZoneSnapshot, e ->
@@ -72,7 +75,7 @@ class CloudDBViewModel : ViewModel() {
         authInstance: AGConnectAuth,
         credentials: SignInResult
     ) {
-        this.userID = credentials.user.displayName
+        this.userID = credentials.user.uid
 
         if (DBZone == null) {
             AGConnectCloudDB.initialize(context)
@@ -100,9 +103,29 @@ class CloudDBViewModel : ViewModel() {
 
         this.DBInstance.openCloudDBZone2(mConfig, true).addOnSuccessListener {
             DBZone = it
-            canRegisterPushToken.value = true
+            dbReady.value = true
         }.addOnFailureListener {
             Log.e(TAG, "${it.message}")
+        }
+    }
+
+    fun saveUser(credentials: AGConnectUser) {
+        val user = User().apply {
+            id = credentials.uid
+            nickname = credentials.displayName
+            email = credentials.email
+            phone_number = credentials.phone
+            picture_url = credentials.photoUrl
+            provider_id = credentials.providerId
+            color = Color.Red.toString()
+        }
+
+        val upsertTask = this.DBZone!!.executeUpsert(user)
+        upsertTask.addOnSuccessListener { cloudDBZoneResult ->
+            Log.i(TAG, "Upsert users $cloudDBZoneResult records")
+        }.addOnFailureListener {
+            val err = it as AGConnectCloudDBException
+            Log.e(TAG, "${err.code}: ${err.message}")
         }
     }
 

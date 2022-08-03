@@ -1,9 +1,7 @@
 package com.fs.cloudapp
 
-import android.R.attr
 import android.content.Intent
 import android.os.Bundle
-import android.support.annotation.NonNull
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,8 +17,6 @@ import com.fs.cloudapp.viewmodels.AuthViewModel
 import com.fs.cloudapp.viewmodels.CloudDBViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.gms.tasks.OnFailureListener
-import com.google.android.gms.tasks.OnSuccessListener
 import com.google.android.gms.tasks.Task
 import com.huawei.agconnect.api.AGConnectApi
 import com.huawei.agconnect.auth.GoogleAuthProvider
@@ -41,7 +37,7 @@ class MainActivity : ComponentActivity() {
 
             val loggedIn = remember { authViewModel.loggedIn }.value
             val googleLogin = remember { googleLoginToken }.value
-            val registerPushToken = remember { cloudDBViewModel.canRegisterPushToken }.value
+            val dbReady = remember { cloudDBViewModel.dbReady }.value
 
             if (googleLogin.isNotEmpty()) {
                 authViewModel.loginWithCredentials(
@@ -55,7 +51,9 @@ class MainActivity : ComponentActivity() {
                     authViewModel.getOutput().value!!
                 )
 
-                if (registerPushToken) {
+                if (dbReady) {
+                    cloudDBViewModel.saveUser(authViewModel.getOutput().value!!.user)
+
                     getPushToken(cloudDBViewModel)
 
                     BindChat(cloudDBViewModel = cloudDBViewModel)

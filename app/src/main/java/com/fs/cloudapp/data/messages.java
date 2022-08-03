@@ -18,7 +18,7 @@ import java.util.Date;
 /**
  * Definition of ObjectType messages.
  *
- * @since 2022-07-13
+ * @since 2022-08-03
  */
 @PrimaryKeys({"id"})
 public final class messages extends CloudDBZoneObject implements Serializable {
@@ -35,8 +35,6 @@ public final class messages extends CloudDBZoneObject implements Serializable {
     @NotNull
     @DefaultValue(intValue = 0)
     private Integer type;
-
-    private Date date;
 
     public messages() {
         super(messages.class);
@@ -75,14 +73,6 @@ public final class messages extends CloudDBZoneObject implements Serializable {
 
     public Integer getType() {
         return type;
-    }
-
-    public void setDate(Date date) {
-        this.date = date;
-    }
-
-    public Date getDate() {
-        return date;
     }
 
 }
