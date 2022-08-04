@@ -12,15 +12,16 @@ import com.huawei.agconnect.cloud.database.annotations.NotNull;
 import com.huawei.agconnect.cloud.database.annotations.Indexes;
 import com.huawei.agconnect.cloud.database.annotations.PrimaryKeys;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Definition of ObjectType full_message.
  *
- * @since 2022-08-03
+ * @since 2022-08-04
  */
 @PrimaryKeys({"id"})
-public final class full_message extends CloudDBZoneObject {
+public final class full_message extends CloudDBZoneObject implements Serializable {
     private Long id;
 
     @NotNull
@@ -49,12 +50,17 @@ public final class full_message extends CloudDBZoneObject {
 
     private Date date_ins;
 
+    @NotNull
+    @DefaultValue(stringValue = "test")
+    private String user_id;
+
     public full_message() {
         super(full_message.class);
         this.text = "test";
         this.type = 0;
         this.nickname = "test";
         this.credential_provider_id = "1";
+        this.user_id = "test";
     }
 
     public void setId(Long id) {
@@ -135,6 +141,14 @@ public final class full_message extends CloudDBZoneObject {
 
     public Date getDate_ins() {
         return date_ins;
+    }
+
+    public void setUser_id(String user_id) {
+        this.user_id = user_id;
+    }
+
+    public String getUser_id() {
+        return user_id;
     }
 
 }

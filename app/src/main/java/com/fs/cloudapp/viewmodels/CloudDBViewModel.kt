@@ -8,10 +8,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.fs.cloudapp.data.ObjectTypeInfoHelper
-import com.fs.cloudapp.data.messages
-import com.fs.cloudapp.data.user_push_tokens
-import com.fs.cloudapp.data.users
+import com.fs.cloudapp.data.*
 import com.huawei.agconnect.AGCRoutePolicy
 import com.huawei.agconnect.AGConnectInstance
 import com.huawei.agconnect.AGConnectOptionsBuilder
@@ -24,6 +21,7 @@ import java.lang.Exception
 
 typealias Message = messages
 typealias User = users
+typealias FullMessage = full_message
 
 class CloudDBViewModel : ViewModel() {
 
@@ -36,20 +34,20 @@ class CloudDBViewModel : ViewModel() {
     private var messageId: Long = 0L
 
     private var output: MutableLiveData<String> = MutableLiveData()
-    private var messages: MutableLiveData<List<Message>> = MutableLiveData()
+    private var messages: MutableLiveData<List<FullMessage>> = MutableLiveData()
     private var failureOutput: MutableLiveData<Exception> = MutableLiveData()
     private var loadingProgress: MutableState<Boolean> = mutableStateOf(false)
 
     var dbReady: MutableState<Boolean> = mutableStateOf(false)
         private set
 
-    private val mSnapshotListener = OnSnapshotListener<Message> { cloudDBZoneSnapshot, e ->
+    private val mSnapshotListener = OnSnapshotListener<FullMessage> { cloudDBZoneSnapshot, e ->
         if (e != null) {
             Log.w(TAG, "onSnapshot: " + e.message)
             return@OnSnapshotListener
         }
         val snapshotObjects = cloudDBZoneSnapshot.snapshotObjects
-        val messagesList: MutableList<Message> = ArrayList()
+        val messagesList: MutableList<FullMessage> = ArrayList()
         try {
             if (snapshotObjects != null) {
                 while (snapshotObjects.hasNext()) {
@@ -160,10 +158,10 @@ class CloudDBViewModel : ViewModel() {
     }
 
     fun getAllMessages() {
-        val query = CloudDBZoneQuery.where(Message::class.java).equalTo("type", 0)
+        val query = CloudDBZoneQuery.where(FullMessage::class.java).equalTo("type", 0)
         val queryTask = this.DBZone!!.executeQuery(
             query,
-            CloudDBZoneQuery.CloudDBZoneQueryPolicy.POLICY_QUERY_FROM_CLOUD_ONLY
+            CloudDBZoneQuery.CloudDBZoneQueryPolicy.POLICY_QUERY_DEFAULT
         )
         queryTask.addOnSuccessListener { snapshot -> processQueryResult(snapshot) }
             .addOnFailureListener {
@@ -176,9 +174,9 @@ class CloudDBViewModel : ViewModel() {
         )
     }
 
-    private fun processQueryResult(snapshot: CloudDBZoneSnapshot<Message>) {
+    private fun processQueryResult(snapshot: CloudDBZoneSnapshot<FullMessage>) {
         val messagesCursor = snapshot.snapshotObjects
-        val messagesList: MutableList<messages> = ArrayList()
+        val messagesList: MutableList<FullMessage> = ArrayList()
         try {
             while (messagesCursor.hasNext()) {
                 val message = messagesCursor.next()
@@ -198,6 +196,22 @@ class CloudDBViewModel : ViewModel() {
         messages.value = messagesList
     }
 
+    fun deleteMessage(message: FullMessage) {
+        val messToDelete = Message().apply {
+            id = message.id
+            text = message.text
+            type = message.type
+            user_id = message.user_id
+        }
+
+        val deleteTask = this.DBZone!!.executeDelete(messToDelete)
+        deleteTask.addOnSuccessListener {
+            Log.i(TAG, "Delete message ${message.id} succeed!")
+        }.addOnFailureListener {
+            Log.e(TAG, "Delete message error: ", it)
+        }
+    }
+
     fun getOutput(): LiveData<String> {
         return output
     }
@@ -210,7 +224,7 @@ class CloudDBViewModel : ViewModel() {
         this.failureOutput.value = null
     }
 
-    fun getChatMessages(): LiveData<List<Message>> {
+    fun getChatMessages(): LiveData<List<FullMessage>> {
         return this.messages
     }
 
