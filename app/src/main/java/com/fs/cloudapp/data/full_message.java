@@ -12,16 +12,16 @@ import com.huawei.agconnect.cloud.database.annotations.NotNull;
 import com.huawei.agconnect.cloud.database.annotations.Indexes;
 import com.huawei.agconnect.cloud.database.annotations.PrimaryKeys;
 
-import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Definition of ObjectType full_message.
  *
- * @since 2022-08-04
+ * @since 2022-08-06
  */
 @PrimaryKeys({"id"})
-public final class full_message extends CloudDBZoneObject implements Serializable {
+@Indexes({"date_index:date_ins", "id:id"})
+public final class full_message extends CloudDBZoneObject {
     private Long id;
 
     @NotNull

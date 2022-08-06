@@ -25,7 +25,7 @@ class AuthViewModel : ViewModel() {
     private var output: MutableLiveData<SignInResult> = MutableLiveData()
     private var failureOutput: MutableLiveData<Exception> = MutableLiveData()
 
-    var authInstance = AGConnectAuth.getInstance()
+    var authInstance: AGConnectAuth = AGConnectAuth.getInstance()
         private set
 
     init {

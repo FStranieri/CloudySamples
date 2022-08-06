@@ -3,14 +3,12 @@ package com.fs.cloudapp.composables
 import android.graphics.drawable.VectorDrawable
 import android.widget.Toast
 import androidx.compose.animation.*
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -20,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -29,9 +28,12 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -51,7 +53,8 @@ fun BindChat(
     ConstraintLayout(Modifier.fillMaxSize()) {
         val (title,
             chatList,
-            inputMessage) = createRefs()
+            inputMessage,
+            textToEdit) = createRefs()
         val messagesValue by cloudDBViewModel.getChatMessages().observeAsState()
         val chatMessagesFailure by cloudDBViewModel.getFailureOutput().observeAsState()
         val lazyListState = rememberLazyListState()
@@ -108,6 +111,7 @@ fun BindChat(
         }
 
         var messageText by remember { mutableStateOf("") }
+        val messageToEdit by remember { cloudDBViewModel.messageToEdit }
 
         OutlinedTextField(
             modifier = Modifier
@@ -128,7 +132,11 @@ fun BindChat(
             trailingIcon = {
                 if (messageText.isNotEmpty()) {
                     IconButton(onClick = {
-                        cloudDBViewModel.sendMessage(messageText)
+                        if (messageToEdit != null) {
+                            cloudDBViewModel.editMessage(messageText, messageToEdit!!)
+                        } else {
+                            cloudDBViewModel.sendMessage(messageText)
+                        }
                         messageText = ""
                     }) {
                         Icon(
@@ -139,6 +147,43 @@ fun BindChat(
                 }
             }
         )
+
+        AnimatedVisibility(
+            visible = messageToEdit != null,
+            modifier = Modifier
+                .fillMaxWidth()
+                .constrainAs(textToEdit) {
+                    linkTo(start = parent.start, end = parent.end)
+                    bottom.linkTo(inputMessage.top)
+                    width = Dimension.wrapContent
+                    height = Dimension.wrapContent
+                },
+            enter = fadeIn(
+                // Overwrites the initial value of alpha to 0.4f for fade in, 0 by default
+                initialAlpha = 1f
+            ),
+            exit = fadeOut(
+                // Overwrites the default animation with tween
+                animationSpec = tween(durationMillis = 250)
+            )
+        ) {
+            Text(
+                buildAnnotatedString {
+                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = Color.Gray)) {
+                        append("Editing:")
+                    }
+                    append("\n${messageToEdit?.text ?: ""}")
+                },
+                modifier = Modifier
+                    .background(Color.Yellow)
+                    .padding(8.dp)
+                    .clickable {
+                        cloudDBViewModel.messageToEdit.value = null
+                    },
+                style = TextStyle(fontStyle = FontStyle.Italic),
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 
@@ -147,17 +192,19 @@ fun BindChat(
 fun BuildMyChatCard(message: FullMessage, cloudDBViewModel: CloudDBViewModel) {
     ConstraintLayout(Modifier.fillMaxWidth()) {
         val (card) = createRefs()
-        var expanded by remember { mutableStateOf(false) }
+        var showOptions by remember { mutableStateOf(false) }
 
         Card(
-            modifier = Modifier.constrainAs(card) {
-                end.linkTo(parent.end)
-                width = Dimension.preferredWrapContent
-                height = Dimension.preferredWrapContent
-            }.combinedClickable (
-                onClick = { },
-                onLongClick = { expanded = true }
-                    ),
+            modifier = Modifier
+                .constrainAs(card) {
+                    end.linkTo(parent.end)
+                    width = Dimension.preferredWrapContent
+                    height = Dimension.preferredWrapContent
+                }
+                .combinedClickable(
+                    onClick = { },
+                    onLongClick = { showOptions = true }
+                ),
             backgroundColor = Color.Yellow,
             elevation = 4.dp,
             shape = RoundedCornerShape(8.dp),
@@ -166,18 +213,22 @@ fun BuildMyChatCard(message: FullMessage, cloudDBViewModel: CloudDBViewModel) {
                 val (menu, text) = createRefs()
 
                 DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
+                    expanded = showOptions,
+                    onDismissRequest = { showOptions = false },
                     modifier = Modifier.constrainAs(menu) {
                         end.linkTo(parent.end)
                         bottom.linkTo(parent.top)
                     }
                 ) {
-                    DropdownMenuItem(onClick = { /* Handle refresh! */ }) {
+                    DropdownMenuItem(onClick = {
+                        cloudDBViewModel.messageToEdit.value = message
+                        showOptions = false
+                    }) {
                         Text("Edit")
                     }
                     DropdownMenuItem(onClick = {
                         cloudDBViewModel.deleteMessage(message)
+                        showOptions = false
                     }) {
                         Text("Delete")
                     }
@@ -187,7 +238,9 @@ fun BuildMyChatCard(message: FullMessage, cloudDBViewModel: CloudDBViewModel) {
                     text = message.text,
                     color = Color.Black,
                     fontSize = 22.sp,
-                    modifier = Modifier.constrainAs(text){}.padding(16.dp)
+                    modifier = Modifier
+                        .constrainAs(text) {}
+                        .padding(16.dp)
                 )
             }
         }

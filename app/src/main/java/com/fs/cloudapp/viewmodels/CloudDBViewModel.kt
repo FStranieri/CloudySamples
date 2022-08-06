@@ -68,6 +68,8 @@ class CloudDBViewModel : ViewModel() {
         }
     }
 
+    var messageToEdit: MutableState<FullMessage?> = mutableStateOf(null)
+
     fun initAGConnectCloudDB(
         context: Context,
         authInstance: AGConnectAuth,
@@ -148,6 +150,23 @@ class CloudDBViewModel : ViewModel() {
             this.type = 0
         }
 
+        sendMessageOnCloud(message)
+    }
+
+    fun editMessage (text: String, fullMessage: FullMessage) {
+        val message = Message().apply {
+            this.id = fullMessage.id
+            this.text = text
+            this.user_id = fullMessage.user_id
+            this.type = fullMessage.type
+        }
+
+        this.messageToEdit.value = null
+
+        sendMessageOnCloud(message)
+    }
+
+    private fun sendMessageOnCloud(message: Message) {
         val upsertTask = this.DBZone!!.executeUpsert(message)
         upsertTask.addOnSuccessListener { cloudDBZoneResult ->
             Log.i(TAG, "Upsert $cloudDBZoneResult records")
@@ -158,7 +177,11 @@ class CloudDBViewModel : ViewModel() {
     }
 
     fun getAllMessages() {
-        val query = CloudDBZoneQuery.where(FullMessage::class.java).equalTo("type", 0)
+        val query = CloudDBZoneQuery.where(FullMessage::class.java)
+            .equalTo("type", 0)
+            //not supported by the subscription
+            //.orderByDesc("date_ins")
+
         val queryTask = this.DBZone!!.executeQuery(
             query,
             CloudDBZoneQuery.CloudDBZoneQueryPolicy.POLICY_QUERY_DEFAULT
