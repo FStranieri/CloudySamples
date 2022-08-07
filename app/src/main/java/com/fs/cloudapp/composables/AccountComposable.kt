@@ -1,13 +1,12 @@
 package com.fs.cloudapp.composables
 
 import android.app.Activity
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.currentCompositionLocalContext
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -33,81 +32,90 @@ fun BindAccounts(
     authViewModel: AuthViewModel,
     activity: Activity
 ) {
-    ConstraintLayout(Modifier.fillMaxSize()) {
-        val (title,
-            huaweiIdButton,
-            googleButton,
-            facebookButton) = createRefs()
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(Modifier.wrapContentSize(),
+            horizontalAlignment = Alignment.CenterHorizontally) {
 
-        Text(
-            modifier = Modifier
-                .constrainAs(title) {
-                    top.linkTo(parent.top)
+            Text(
+                modifier = Modifier.wrapContentSize()
+                    .padding(8.dp),
+                text = stringResource(R.string.login_page_title),
+                style = TextStyle(fontStyle = FontStyle.Italic),
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // HUAWEI ID LOGIN
+            AndroidView(
+                modifier = Modifier.wrapContentSize(), // Occupy the max size in the Compose UI tree
+                factory = { context ->
+                    // Creates HUAWEI ID button
+                    HuaweiIdAuthButton(context).apply {
+                        // Sets up listeners for View -> Compose communication
+                        setOnClickListener {
+                            authViewModel.login(
+                                context as Activity,
+                                AGConnectAuthCredential.HMS_Provider
+                            )
+                        }
+                    }
+                })
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // GOOGLE LOGIN
+            /*Button(
+                modifier = Modifier.constrainAs(googleButton) {
+                    top.linkTo(huaweiIdButton.bottom, 16.dp)
                     linkTo(start = parent.start, end = parent.end)
                     width = Dimension.wrapContent
                     height = Dimension.wrapContent
-                }
-                .padding(8.dp),
-            text = stringResource(R.string.login_page_title),
-            style = TextStyle(fontStyle = FontStyle.Italic),
-            fontWeight = FontWeight.Bold
-        )
+                }, // Occupy the max size in the Compose UI tree
+                onClick = {
 
-        // HUAWEI ID LOGIN
-        AndroidView(
-            modifier = Modifier.constrainAs(huaweiIdButton) {
-                top.linkTo(title.bottom, 16.dp)
-                linkTo(start = parent.start, end = parent.end)
-                width = Dimension.wrapContent
-                height = Dimension.wrapContent
-            }, // Occupy the max size in the Compose UI tree
-            factory = { context ->
-                // Creates HUAWEI ID button
-                HuaweiIdAuthButton(context).apply {
-                    // Sets up listeners for View -> Compose communication
-                    setOnClickListener {
-                        authViewModel.login(
-                            context as Activity,
-                            AGConnectAuthCredential.HMS_Provider
-                        )
+                    authViewModel.loginWithGoogle(activity)
+                }) {
+                Text(text = "GOOGLE LOGIN")
+            }*/
+            AndroidView(
+                modifier = Modifier.wrapContentSize(),
+                // Occupy the max size in the Compose UI tree
+                factory = { context ->
+                    // Creates Google login button
+                    SignInButton(context).apply {
+                        // Sets up listeners for View -> Compose communication
+                        setOnClickListener {
+                            authViewModel.login(
+                                context as Activity,
+                                AGConnectAuthCredential.Google_Provider
+                            )
+                        }
                     }
-                }
-            })
+                })
 
-        // GOOGLE LOGIN
-        Button(
-            modifier = Modifier.constrainAs(googleButton) {
-                top.linkTo(huaweiIdButton.bottom, 16.dp)
-                linkTo(start = parent.start, end = parent.end)
-                width = Dimension.wrapContent
-                height = Dimension.wrapContent
-            }, // Occupy the max size in the Compose UI tree
-            onClick = {
+            Spacer(modifier = Modifier.height(8.dp))
 
-                authViewModel.loginWithGoogle(activity)
-            }) {
-            Text(text = "GOOGLE LOGIN")
+            // FACEBOOK LOGIN
+            AndroidView(
+                modifier = Modifier.wrapContentSize(),
+                // Occupy the max size in the Compose UI tree
+                factory = { context ->
+                    // Creates Facebook button
+                    LoginButton(context).apply {
+                        // Sets up listeners for View -> Compose communication
+                        setOnClickListener {
+                            authViewModel.login(
+                                context as Activity,
+                                AGConnectAuthCredential.Facebook_Provider
+                            )
+                        }
+                    }
+                })
         }
-
-        // FACEBOOK LOGIN
-        AndroidView(
-            modifier = Modifier.constrainAs(facebookButton) {
-                top.linkTo(googleButton.bottom, 16.dp)
-                linkTo(start = parent.start, end = parent.end)
-                width = Dimension.wrapContent
-                height = Dimension.wrapContent
-            }, // Occupy the max size in the Compose UI tree
-            factory = { context ->
-                // Creates Facebook button
-                LoginButton(context).apply {
-                    // Sets up listeners for View -> Compose communication
-                    setOnClickListener {
-                        authViewModel.login(
-                            context as Activity,
-                            AGConnectAuthCredential.Facebook_Provider
-                        )
-                    }
-                }
-            })
     }
+
 }
