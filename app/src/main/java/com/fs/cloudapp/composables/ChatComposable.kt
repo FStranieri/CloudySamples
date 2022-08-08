@@ -1,7 +1,5 @@
 package com.fs.cloudapp.composables
 
-import android.graphics.drawable.VectorDrawable
-import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
@@ -18,14 +16,9 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -38,31 +31,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
+import androidx.core.graphics.toColorInt
 import com.fs.cloudapp.R
-import com.fs.cloudapp.data.messages
+import com.fs.cloudapp.viewmodels.AuthViewModel
 import com.fs.cloudapp.viewmodels.CloudDBViewModel
 import com.fs.cloudapp.viewmodels.FullMessage
-import com.skydoves.landscapist.CircularReveal
 import com.skydoves.landscapist.glide.GlideImage
-import kotlin.math.round
 
 @Composable
 fun BindChat(
+    authViewModel: AuthViewModel,
     cloudDBViewModel: CloudDBViewModel
 ) {
     ConstraintLayout(Modifier.fillMaxSize()) {
         val (title,
+            logoutButton,
             chatList,
             inputMessage,
             textToEdit) = createRefs()
         val messagesValue by cloudDBViewModel.getChatMessages().observeAsState()
-        val chatMessagesFailure by cloudDBViewModel.getFailureOutput().observeAsState()
         val lazyListState = rememberLazyListState()
-
-        chatMessagesFailure?.let {
-            Toast.makeText(LocalContext.current, it.message, Toast.LENGTH_LONG).show()
-            cloudDBViewModel.resetFailureOutput()
-        }
 
         Text(
             modifier = Modifier
@@ -77,6 +65,19 @@ fun BindChat(
             style = TextStyle(fontStyle = FontStyle.Italic),
             fontWeight = FontWeight.Bold
         )
+
+        Button(
+            modifier = Modifier.constrainAs(logoutButton) {
+                top.linkTo(parent.top, 8.dp)
+                end.linkTo(parent.end, 8.dp)
+                width = Dimension.wrapContent
+                height = Dimension.wrapContent
+            }, // Occupy the max size in the Compose UI tree
+            onClick = {
+                authViewModel.logout()
+            }) {
+            Text(text = stringResource(R.string.logout_button_text), fontSize = 8.sp)
+        }
 
         Box(
             modifier = Modifier
@@ -196,6 +197,7 @@ fun BuildMyChatCard(message: FullMessage, cloudDBViewModel: CloudDBViewModel) {
 
         Card(
             modifier = Modifier
+                .widthIn(max = 300.dp)
                 .constrainAs(card) {
                     end.linkTo(parent.end)
                     width = Dimension.preferredWrapContent
@@ -205,42 +207,56 @@ fun BuildMyChatCard(message: FullMessage, cloudDBViewModel: CloudDBViewModel) {
                     onClick = { },
                     onLongClick = { showOptions = true }
                 ),
-            backgroundColor = Color.Yellow,
+            backgroundColor = Color("#E8D100".toColorInt()),
             elevation = 4.dp,
             shape = RoundedCornerShape(8.dp),
         ) {
             ConstraintLayout(Modifier.wrapContentWidth()) {
-                val (menu, text) = createRefs()
+                val (menu, text, date) = createRefs()
 
                 DropdownMenu(
                     expanded = showOptions,
                     onDismissRequest = { showOptions = false },
-                    modifier = Modifier.constrainAs(menu) {
-                        end.linkTo(parent.end)
-                        bottom.linkTo(parent.top)
-                    }
+                    modifier = Modifier
+                        .constrainAs(menu) {}
+                        .then(Modifier.background(color = Color("#E18701".toColorInt())))
                 ) {
                     DropdownMenuItem(onClick = {
                         cloudDBViewModel.messageToEdit.value = message
                         showOptions = false
                     }) {
-                        Text("Edit")
+                        Text(stringResource(R.string.edit_message_option_text))
                     }
                     DropdownMenuItem(onClick = {
                         cloudDBViewModel.deleteMessage(message)
                         showOptions = false
                     }) {
-                        Text("Delete")
+                        Text(stringResource(R.string.delete_message_option_text))
                     }
                 }
+
+                Text(
+                    text = message.formattedDate,
+                    color = Color.DarkGray,
+                    fontSize = 10.sp,
+                    modifier = Modifier
+                        .constrainAs(date) {
+                            end.linkTo(parent.end)
+                            bottom.linkTo(parent.bottom)
+                        }
+                        .then(Modifier.padding(8.dp))
+                )
 
                 Text(
                     text = message.text,
                     color = Color.Black,
                     fontSize = 22.sp,
                     modifier = Modifier
-                        .constrainAs(text) {}
-                        .padding(16.dp)
+                        .constrainAs(text) {
+                            top.linkTo(parent.top)
+                            bottom.linkTo(date.top, 4.dp)
+                        }
+                        .padding(8.dp)
                 )
             }
         }
@@ -252,20 +268,23 @@ fun BuildUsersChatCard(message: FullMessage) {
     ConstraintLayout(Modifier.fillMaxWidth()) {
         val (card) = createRefs()
         Card(
-            modifier = Modifier.constrainAs(card) {
-                start.linkTo(parent.start)
-                width = Dimension.preferredWrapContent
-                height = Dimension.preferredWrapContent
-            },
-            backgroundColor = Color.Cyan,
+            modifier = Modifier
+                .widthIn(max = 300.dp)
+                .constrainAs(card) {
+                    start.linkTo(parent.start)
+                    width = Dimension.preferredWrapContent
+                    height = Dimension.preferredWrapContent
+                },
+            backgroundColor = Color("#009BAF".toColorInt()),
             elevation = 4.dp,
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(2.dp, Color(message.color.toColorInt()))
         ) {
             ConstraintLayout(Modifier.wrapContentWidth()) {
-                val (name, text, pic) = createRefs()
+                val (name, text, pic, date) = createRefs()
                 Text(
                     text = message.nickname,
-                    color = Color.Blue,
+                    color = Color(message.color.toColorInt()),
                     fontSize = 22.sp,
                     modifier = Modifier
                         .constrainAs(name) {
@@ -294,6 +313,18 @@ fun BuildUsersChatCard(message: FullMessage) {
                 )
 
                 Text(
+                    text = message.formattedDate,
+                    color = Color.DarkGray,
+                    fontSize = 10.sp,
+                    modifier = Modifier
+                        .constrainAs(date) {
+                            end.linkTo(parent.end)
+                            bottom.linkTo(parent.bottom)
+                        }
+                        .then(Modifier.padding(8.dp))
+                )
+
+                Text(
                     text = message.text,
                     color = Color.Black,
                     fontSize = 22.sp,
@@ -301,6 +332,7 @@ fun BuildUsersChatCard(message: FullMessage) {
                         .constrainAs(text) {
                             start.linkTo(pic.end, 4.dp)
                             top.linkTo(name.bottom)
+                            bottom.linkTo(date.top, 4.dp)
                         }
                         .then(Modifier.padding(8.dp))
                 )
