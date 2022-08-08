@@ -21,7 +21,7 @@ import java.util.Date;
  * @since 2022-08-03
  */
 @PrimaryKeys({"id"})
-public final class messages extends CloudDBZoneObject implements Serializable {
+public final class messages extends CloudDBZoneObject {
     private Long id;
 
     @NotNull

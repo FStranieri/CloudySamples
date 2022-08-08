@@ -4,4 +4,7 @@
     <string name="chat">CHAT</string>
     <string name="send_button">SEND</string>
     <string name="enter_text_label">Write here</string>
+    <string name="logout_button_text">LOGOUT</string>
+    <string name="delete_message_option_text">Delete</string>
+    <string name="edit_message_option_text">Edit</string>
 </resources>

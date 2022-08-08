@@ -3,11 +3,13 @@ package com.fs.cloudapp
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import com.fs.cloudapp.composables.BindAccounts
@@ -36,8 +38,20 @@ class MainActivity : ComponentActivity() {
             val cloudDBViewModel: CloudDBViewModel by viewModels()
 
             val loggedIn = remember { authViewModel.loggedIn }.value
+            val authErrorState = remember { authViewModel.failureOutput }
             val googleLogin = remember { googleLoginToken }.value
             val dbReady = remember { cloudDBViewModel.dbReady }.value
+            val dbErrorState = remember { cloudDBViewModel.failureOutput }
+
+            authErrorState.value?.let {
+                Toast.makeText(this, it.message, Toast.LENGTH_LONG).show()
+                authViewModel.resetFailureOutput()
+            }
+
+            dbErrorState.value?.let {
+                Toast.makeText(this, it.message, Toast.LENGTH_SHORT).show()
+                cloudDBViewModel.resetFailureOutput()
+            }
 
             if (googleLogin.isNotEmpty()) {
                 authViewModel.loginWithCredentials(
@@ -47,16 +61,15 @@ class MainActivity : ComponentActivity() {
             if (loggedIn) {
                 cloudDBViewModel.initAGConnectCloudDB(
                     this,
-                    authViewModel.authInstance,
-                    authViewModel.getOutput().value!!
+                    authViewModel.authInstance
                 )
 
                 if (dbReady) {
-                    cloudDBViewModel.saveUser(authViewModel.getOutput().value!!.user)
+                    cloudDBViewModel.saveUser(authViewModel.authInstance.currentUser)
 
                     getPushToken(cloudDBViewModel)
 
-                    BindChat(cloudDBViewModel = cloudDBViewModel)
+                    BindChat(authViewModel= authViewModel, cloudDBViewModel = cloudDBViewModel)
 
                     cloudDBViewModel.getAllMessages()
                 }
@@ -64,11 +77,11 @@ class MainActivity : ComponentActivity() {
                 BindAccounts(authViewModel = authViewModel, this)
             }
 
-            DisposableEffect(key1 = cloudDBViewModel) {
+            /*DisposableEffect(key1 = cloudDBViewModel) {
                 onDispose {
                     //cloudDBViewModel.closeDB()
                 }
-            }
+            }*/
         }
     }
 

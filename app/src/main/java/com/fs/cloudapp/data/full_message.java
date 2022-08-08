@@ -12,6 +12,8 @@ import com.huawei.agconnect.cloud.database.annotations.NotNull;
 import com.huawei.agconnect.cloud.database.annotations.Indexes;
 import com.huawei.agconnect.cloud.database.annotations.PrimaryKeys;
 
+import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -21,7 +23,7 @@ import java.util.Date;
  */
 @PrimaryKeys({"id"})
 @Indexes({"date_index:date_ins", "id:id"})
-public final class full_message extends CloudDBZoneObject {
+public final class full_message extends CloudDBZoneObject implements Serializable {
     private Long id;
 
     @NotNull
@@ -149,6 +151,11 @@ public final class full_message extends CloudDBZoneObject {
 
     public String getUser_id() {
         return user_id;
+    }
+
+    public String getFormattedDate() {
+        SimpleDateFormat formatter = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+        return formatter.format(date_ins);
     }
 
 }

@@ -33,9 +33,11 @@ class CloudDBViewModel : ViewModel() {
 
     private var messageId: Long = 0L
 
-    private var output: MutableLiveData<String> = MutableLiveData()
     private var messages: MutableLiveData<List<FullMessage>> = MutableLiveData()
-    private var failureOutput: MutableLiveData<Exception> = MutableLiveData()
+
+    var failureOutput: MutableState<Exception?> = mutableStateOf(null)
+        private set
+
     private var loadingProgress: MutableState<Boolean> = mutableStateOf(false)
 
     var dbReady: MutableState<Boolean> = mutableStateOf(false)
@@ -60,7 +62,7 @@ class CloudDBViewModel : ViewModel() {
                     messagesList.add(message)
                 }
             }
-            this.messages.postValue(messagesList)
+            this.messages.postValue(messagesList.sortedBy { it.date_ins })
         } catch (snapshotException: AGConnectCloudDBException) {
             Log.w(TAG, "onSnapshot:(getObject) " + snapshotException.message)
         } finally {
@@ -72,10 +74,9 @@ class CloudDBViewModel : ViewModel() {
 
     fun initAGConnectCloudDB(
         context: Context,
-        authInstance: AGConnectAuth,
-        credentials: SignInResult
+        authInstance: AGConnectAuth
     ) {
-        this.userID = credentials.user.uid
+        this.userID = authInstance.currentUser.uid
 
         if (DBZone == null) {
             AGConnectCloudDB.initialize(context)
@@ -117,7 +118,6 @@ class CloudDBViewModel : ViewModel() {
             phone_number = credentials.phone
             picture_url = credentials.photoUrl
             provider_id = credentials.providerId
-            color = Color.Red.toString()
         }
 
         val upsertTask = this.DBZone!!.executeUpsert(user)
@@ -153,7 +153,7 @@ class CloudDBViewModel : ViewModel() {
         sendMessageOnCloud(message)
     }
 
-    fun editMessage (text: String, fullMessage: FullMessage) {
+    fun editMessage(text: String, fullMessage: FullMessage) {
         val message = Message().apply {
             this.id = fullMessage.id
             this.text = text
@@ -179,8 +179,8 @@ class CloudDBViewModel : ViewModel() {
     fun getAllMessages() {
         val query = CloudDBZoneQuery.where(FullMessage::class.java)
             .equalTo("type", 0)
-            //not supported by the subscription
-            //.orderByDesc("date_ins")
+        //not supported by the subscription
+        //.orderByDesc("date_ins")
 
         val queryTask = this.DBZone!!.executeQuery(
             query,
@@ -216,7 +216,7 @@ class CloudDBViewModel : ViewModel() {
             snapshot.release()
         }
 
-        messages.value = messagesList
+        messages.value = messagesList.sortedBy { it.date_ins }
     }
 
     fun deleteMessage(message: FullMessage) {
@@ -233,14 +233,6 @@ class CloudDBViewModel : ViewModel() {
         }.addOnFailureListener {
             Log.e(TAG, "Delete message error: ", it)
         }
-    }
-
-    fun getOutput(): LiveData<String> {
-        return output
-    }
-
-    fun getFailureOutput(): LiveData<Exception> {
-        return failureOutput
     }
 
     fun resetFailureOutput() {
