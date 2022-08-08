@@ -235,6 +235,19 @@ class CloudDBViewModel : ViewModel() {
         }
     }
 
+    fun deleteUser(id: String) {
+        val userToDelete = User().apply {
+            this.id = id
+        }
+
+        val deleteTask = this.DBZone!!.executeDelete(userToDelete)
+        deleteTask.addOnSuccessListener {
+            Log.i(TAG, "Delete user ${userToDelete.id} succeed!")
+        }.addOnFailureListener {
+            Log.e(TAG, "Delete user error: ", it)
+        }
+    }
+
     fun resetFailureOutput() {
         this.failureOutput.value = null
     }

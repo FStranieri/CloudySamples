@@ -15,6 +15,9 @@ import com.huawei.agconnect.auth.AGConnectAuthCredential
 
 class AuthViewModel : ViewModel() {
 
+    var previousInstanceAlive: Boolean = false
+        private set
+
     var loggedIn: MutableState<Boolean> = mutableStateOf(false)
         private set
 
@@ -25,7 +28,8 @@ class AuthViewModel : ViewModel() {
         private set
 
     init {
-        this.loggedIn.value = authInstance.currentUser != null
+        this.previousInstanceAlive = this.authInstance.currentUser != null
+        this.loggedIn.value = previousInstanceAlive
     }
 
     fun login(activity: Activity, credentialType: Int) {
@@ -49,11 +53,13 @@ class AuthViewModel : ViewModel() {
     }
 
     fun loginWithGoogle(activity: Activity) {
-        val client = GoogleSignIn.getClient(activity,
+        val client = GoogleSignIn.getClient(
+            activity,
             GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(activity.getString(R.string.google_client_id))
                 .requestProfile()
-                .build())
+                .build()
+        )
 
         val signInIntent: Intent = client.signInIntent
         startActivityForResult(activity, signInIntent, GOOGLE_SIGN_IN, null)
@@ -61,6 +67,7 @@ class AuthViewModel : ViewModel() {
 
     fun logout() {
         this.authInstance.signOut()
+        this.previousInstanceAlive = false
         this.loggedIn.value = false
     }
 

@@ -65,9 +65,10 @@ class MainActivity : ComponentActivity() {
                 )
 
                 if (dbReady) {
-                    cloudDBViewModel.saveUser(authViewModel.authInstance.currentUser)
-
-                    getPushToken(cloudDBViewModel)
+                    if(!authViewModel.previousInstanceAlive) {
+                        cloudDBViewModel.saveUser(authViewModel.authInstance.currentUser)
+                        getPushToken(cloudDBViewModel)
+                    }
 
                     BindChat(authViewModel= authViewModel, cloudDBViewModel = cloudDBViewModel)
 
