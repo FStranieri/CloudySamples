@@ -60,3 +60,8 @@ be the same of the record we want to modify.
 4) since we are listening for changes on the [full_message] table through the
    [subscribeSnapshot(..)] function, the list will remove the message card as soon as the listener
    notifies it.
+
+# SETUP:
+1) Follow the Auth Service getting started guide: [link](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-auth-android-getstarted-0000001053053922) and enable the 3rd party login providers you want to support;
+2) Follow the CloudDB getting started guide: [link](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-clouddb-get-started-0000001127676473) and add your tables with the data you want (remember to export the tables as models in your app project);
+3) add an ids.xml file into the 'values' folder with the info of the 3rd party login providers you want to support in your app
