@@ -7,8 +7,12 @@ group chat scenario.
   your own server or anonymously.
   The credentials are already stored into Auth Service but we are saving them on Cloud DB too
   in order to manipulate the info for the chat.
+  
+![](https://github.com/FStranieri/CloudySamples/blob/main/login_screen.png)
 
 - Chat screen using Cloud DB to store and read messages.
+
+![](https://github.com/FStranieri/CloudySamples/blob/main/chat_screen.png)
 
 # ViewModels 
 1) [AuthViewModel](https://github.com/FStranieri/CloudySamples/blob/main/app/src/main/java/com/fs/cloudapp/viewmodels/AuthViewModel.kt)
