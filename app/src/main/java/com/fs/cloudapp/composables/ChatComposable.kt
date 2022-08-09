@@ -38,6 +38,10 @@ import com.fs.cloudapp.viewmodels.CloudDBViewModel
 import com.fs.cloudapp.viewmodels.FullMessage
 import com.skydoves.landscapist.glide.GlideImage
 
+/**
+ * Chat screen using Cloud DB to store and read messages.
+ */
+
 @Composable
 fun BindChat(
     authViewModel: AuthViewModel,
@@ -251,8 +255,8 @@ fun BuildMyChatCard(message: FullMessage, cloudDBViewModel: CloudDBViewModel) {
                 Text(
                     text = message.text,
                     color = Color.Black,
-                    fontSize = 22.sp,
-                    modifier = Modifier
+                    fontSize = 18.sp,
+                    modifier = Modifier.fillMaxWidth()
                         .constrainAs(text) {
                             top.linkTo(parent.top)
                             bottom.linkTo(date.top, 4.dp)
@@ -328,14 +332,14 @@ fun BuildUsersChatCard(message: FullMessage) {
                 Text(
                     text = message.text,
                     color = Color.Black,
-                    fontSize = 22.sp,
+                    fontSize = 18.sp,
                     modifier = Modifier
                         .constrainAs(text) {
                             start.linkTo(pic.end, 4.dp)
                             top.linkTo(name.bottom)
                             bottom.linkTo(date.top, 4.dp)
                         }
-                        .then(Modifier.padding(8.dp))
+                        .then(Modifier.padding(8.dp, end = 8.dp))
                 )
             }
         }

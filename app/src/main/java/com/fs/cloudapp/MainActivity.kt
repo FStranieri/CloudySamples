@@ -53,25 +53,31 @@ class MainActivity : ComponentActivity() {
                 cloudDBViewModel.resetFailureOutput()
             }
 
+            //method 2 for google login, disabled by default
             if (googleLogin.isNotEmpty()) {
                 authViewModel.loginWithCredentials(
                     GoogleAuthProvider.credentialWithToken(googleLoginToken.value))
             }
 
+            //if loggedIn, initialize the CloudDB instance with the user credentials
             if (loggedIn) {
                 cloudDBViewModel.initAGConnectCloudDB(
                     this,
                     authViewModel.authInstance
                 )
 
+                //if the db is initialized continue with the flow
                 if (dbReady) {
+                    //store the user credentials ONLY if it's the very 1st login
                     if(!authViewModel.previousInstanceAlive) {
                         cloudDBViewModel.saveUser(authViewModel.authInstance.currentUser)
                         getPushToken(cloudDBViewModel)
                     }
 
+                    //compose the Chat screen
                     BindChat(authViewModel= authViewModel, cloudDBViewModel = cloudDBViewModel)
 
+                    //get all messages only for the 1st time, then a listener will be registered
                     cloudDBViewModel.getAllMessages()
                 }
             } else {

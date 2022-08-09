@@ -19,6 +19,13 @@ import com.google.android.gms.common.SignInButton
 import com.huawei.agconnect.auth.AGConnectAuthCredential
 import com.huawei.hms.support.hwid.ui.HuaweiIdAuthButton
 
+/**
+ * Login screen, using Auth Service it's possible to login with 3rd party providers,
+ * your own server or anonymously.
+ * The credentials are already stored into Auth Service but we are saving them on Cloud DB too
+ * in order to manipulate the info for the chat.
+ */
+
 @Composable
 fun BindAccounts(
     authViewModel: AuthViewModel,
@@ -43,7 +50,7 @@ fun BindAccounts(
 
             // HUAWEI ID LOGIN
             AndroidView(
-                modifier = Modifier.wrapContentSize(), // Occupy the max size in the Compose UI tree
+                modifier = Modifier.wrapContentSize(),
                 factory = { context ->
                     // Creates HUAWEI ID button
                     HuaweiIdAuthButton(context).apply {
@@ -59,7 +66,7 @@ fun BindAccounts(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // GOOGLE LOGIN
+            // GOOGLE LOGIN with custom management (method 2 according to the documentation)
             /*Button(
                 modifier = Modifier.constrainAs(googleButton) {
                     top.linkTo(huaweiIdButton.bottom, 16.dp)
@@ -73,9 +80,10 @@ fun BindAccounts(
                 }) {
                 Text(text = "GOOGLE LOGIN")
             }*/
+
+            //GOOGLE LOGIN
             AndroidView(
                 modifier = Modifier.wrapContentSize(),
-                // Occupy the max size in the Compose UI tree
                 factory = { context ->
                     // Creates Google login button
                     SignInButton(context).apply {
@@ -94,7 +102,6 @@ fun BindAccounts(
             // FACEBOOK LOGIN
             AndroidView(
                 modifier = Modifier.wrapContentSize(),
-                // Occupy the max size in the Compose UI tree
                 factory = { context ->
                     // Creates Facebook button
                     LoginButton(context).apply {
