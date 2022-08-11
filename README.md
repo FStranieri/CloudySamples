@@ -26,6 +26,9 @@ group chat scenario.
 - [full_message]: a join table between [users] and [messages] that can only be updated by the 
   Cloud Functions and the app reads to show the message cards.
 
+# Cloud Functions
+Sample project -> [link](https://github.com/FStranieri/CloudySamples_CloudFunction)
+
 # Login flow:
 1) the [AuthViewModel] will check if the user is already logged in jump to step 7;
 2) if the user is not logged in, it clicks on a 3rd party login provider;
