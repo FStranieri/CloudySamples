@@ -4,20 +4,22 @@ import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.fs.cloudapp.data.*
 import com.huawei.agconnect.AGCRoutePolicy
 import com.huawei.agconnect.AGConnectInstance
 import com.huawei.agconnect.AGConnectOptionsBuilder
 import com.huawei.agconnect.auth.AGConnectAuth
 import com.huawei.agconnect.auth.AGConnectUser
-import com.huawei.agconnect.auth.SignInResult
 import com.huawei.agconnect.cloud.database.*
 import com.huawei.agconnect.cloud.database.exceptions.AGConnectCloudDBException
-import java.lang.Exception
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlin.Exception
 
 typealias Message = messages
 typealias User = users
@@ -28,6 +30,10 @@ class CloudDBViewModel : ViewModel() {
     private lateinit var DBInstance: AGConnectCloudDB
     private var DBZone: CloudDBZone? = null
 
+    private val mState = MutableStateFlow(CloudState())
+    val state: StateFlow<CloudState>
+        get() = mState
+
     var userID: String = ""
         private set
 
@@ -35,13 +41,7 @@ class CloudDBViewModel : ViewModel() {
 
     private var messages: MutableLiveData<List<FullMessage>> = MutableLiveData()
 
-    var failureOutput: MutableState<Exception?> = mutableStateOf(null)
-        private set
-
     private var loadingProgress: MutableState<Boolean> = mutableStateOf(false)
-
-    var dbReady: MutableState<Boolean> = mutableStateOf(false)
-        private set
 
     private val mSnapshotListener = OnSnapshotListener<FullMessage> { cloudDBZoneSnapshot, e ->
         if (e != null) {
@@ -104,7 +104,7 @@ class CloudDBViewModel : ViewModel() {
 
         this.DBInstance.openCloudDBZone2(mConfig, true).addOnSuccessListener {
             DBZone = it
-            dbReady.value = true
+            updateState(mState.value.copy(dbReady = true))
         }.addOnFailureListener {
             Log.e(TAG, "${it.message}")
         }
@@ -188,7 +188,7 @@ class CloudDBViewModel : ViewModel() {
         )
         queryTask.addOnSuccessListener { snapshot -> processQueryResult(snapshot) }
             .addOnFailureListener {
-                failureOutput.value = it
+                updateState(state.value.copy(failureOutput = it))
             }
 
         this.DBZone!!.subscribeSnapshot(
@@ -249,7 +249,7 @@ class CloudDBViewModel : ViewModel() {
     }
 
     fun resetFailureOutput() {
-        this.failureOutput.value = null
+        updateState(state.value.copy(failureOutput = null))
     }
 
     fun getChatMessages(): LiveData<List<FullMessage>> {
@@ -266,7 +266,18 @@ class CloudDBViewModel : ViewModel() {
         }
     }
 
+    private fun updateState(newState: CloudState) {
+        viewModelScope.launch {
+            mState.emit(value = newState)
+        }
+    }
+
     companion object {
         const val TAG = "CloudDBViewModel"
     }
+
+    data class CloudState(
+        val dbReady: Boolean = false,
+        val failureOutput: Exception? = null
+    )
 }

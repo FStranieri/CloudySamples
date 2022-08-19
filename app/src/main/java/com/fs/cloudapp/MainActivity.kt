@@ -7,13 +7,9 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import com.fs.cloudapp.composables.BindAccounts
-import com.fs.cloudapp.composables.BindChat
+import androidx.compose.runtime.*
+import com.fs.cloudapp.composables.BindAccountScreen
+import com.fs.cloudapp.composables.ChatScreen
 import com.fs.cloudapp.data.user_push_tokens
 import com.fs.cloudapp.viewmodels.AuthViewModel
 import com.fs.cloudapp.viewmodels.CloudDBViewModel
@@ -36,19 +32,17 @@ class MainActivity : ComponentActivity() {
         setContent {
             val authViewModel: AuthViewModel by viewModels()
             val cloudDBViewModel: CloudDBViewModel by viewModels()
+            val authState by authViewModel.state.collectAsState()
+            val cloudState by cloudDBViewModel.state.collectAsState()
 
-            val loggedIn = remember { authViewModel.loggedIn }.value
-            val authErrorState = remember { authViewModel.failureOutput }
             val googleLogin = remember { googleLoginToken }.value
-            val dbReady = remember { cloudDBViewModel.dbReady }.value
-            val dbErrorState = remember { cloudDBViewModel.failureOutput }
 
-            authErrorState.value?.let {
+            authState.failureOutput?.let {
                 Toast.makeText(this, it.message, Toast.LENGTH_LONG).show()
                 authViewModel.resetFailureOutput()
             }
 
-            dbErrorState.value?.let {
+            cloudState.failureOutput?.let {
                 Toast.makeText(this, it.message, Toast.LENGTH_SHORT).show()
                 cloudDBViewModel.resetFailureOutput()
             }
@@ -60,28 +54,28 @@ class MainActivity : ComponentActivity() {
             }
 
             //if loggedIn, initialize the CloudDB instance with the user credentials
-            if (loggedIn) {
+            if (authState.loggedIn) {
                 cloudDBViewModel.initAGConnectCloudDB(
                     this,
                     authViewModel.authInstance
                 )
 
                 //if the db is initialized continue with the flow
-                if (dbReady) {
+                if (cloudState.dbReady) {
                     //store the user credentials ONLY if it's the very 1st login
-                    if(!authViewModel.previousInstanceAlive) {
+                    if(!authState.previousInstanceAlive) {
                         cloudDBViewModel.saveUser(authViewModel.authInstance.currentUser)
                         getPushToken(cloudDBViewModel)
                     }
 
                     //compose the Chat screen
-                    BindChat(authViewModel= authViewModel, cloudDBViewModel = cloudDBViewModel)
+                    ChatScreen(authViewModel= authViewModel, cloudDBViewModel = cloudDBViewModel)
 
                     //get all messages only for the 1st time, then a listener will be registered
                     cloudDBViewModel.getAllMessages()
                 }
             } else {
-                BindAccounts(authViewModel = authViewModel, this)
+                BindAccountScreen(authViewModel = authViewModel)
             }
 
             /*DisposableEffect(key1 = cloudDBViewModel) {

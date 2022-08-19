@@ -2,53 +2,58 @@ package com.fs.cloudapp.viewmodels
 
 import android.app.Activity
 import android.content.Intent
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.fs.cloudapp.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.huawei.agconnect.auth.AGConnectAuth
 import com.huawei.agconnect.auth.AGConnectAuthCredential
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 
 class AuthViewModel : ViewModel() {
 
-    var previousInstanceAlive: Boolean = false
-        private set
+    private val mState = MutableStateFlow(value = AuthState())
+    val state: StateFlow<AuthState>
+        get() = mState
 
-    var loggedIn: MutableState<Boolean> = mutableStateOf(false)
-        private set
-
-    var failureOutput: MutableState<Exception?> = mutableStateOf(null)
-        private set
 
     var authInstance: AGConnectAuth = AGConnectAuth.getInstance()
         private set
 
     init {
-        this.previousInstanceAlive = this.authInstance.currentUser != null
-        this.loggedIn.value = previousInstanceAlive
+        val previousInstanceAlive = this.authInstance.currentUser != null
+        updateState(state.value.copy(loggedIn = previousInstanceAlive, previousInstanceAlive = previousInstanceAlive))
+    }
+
+    private fun updateState(newState: AuthState) {
+        viewModelScope.launch {
+            mState.emit(value = newState)
+        }
     }
 
     fun login(activity: Activity, credentialType: Int) {
-        this.authInstance.signIn(activity, credentialType).addOnSuccessListener {
+        authInstance.signIn(activity, credentialType).addOnSuccessListener {
             // updateUI
-            loggedIn.value = true
+            updateState(state.value.copy(loggedIn = true))
         }.addOnFailureListener {
             // onFailure
-            failureOutput.value = it
+            updateState(state.value.copy(failureOutput = it))
         }
+
     }
 
     fun loginWithCredentials(credential: AGConnectAuthCredential) {
         this.authInstance.signIn(credential).addOnSuccessListener {
             // updateUI
-            loggedIn.value = true
+            updateState(state.value.copy(loggedIn = true))
         }.addOnFailureListener {
             // onFailure
-            failureOutput.value = it
+            updateState(state.value.copy(failureOutput = it))
         }
     }
 
@@ -67,16 +72,21 @@ class AuthViewModel : ViewModel() {
 
     fun logout() {
         this.authInstance.signOut()
-        this.previousInstanceAlive = false
-        this.loggedIn.value = false
+        updateState(state.value.copy(loggedIn = false, previousInstanceAlive = false))
     }
 
     fun resetFailureOutput() {
-        this.failureOutput.value = null
+        updateState(state.value.copy(failureOutput = null))
     }
 
     companion object {
         const val TAG = "AuthViewModel"
         const val GOOGLE_SIGN_IN = 154
     }
+
+    data class AuthState(
+        val loggedIn: Boolean = false,
+        val failureOutput: Exception? = null,
+        val previousInstanceAlive: Boolean = false
+    )
 }

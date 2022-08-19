@@ -6,6 +6,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -27,10 +28,11 @@ import com.huawei.hms.support.hwid.ui.HuaweiIdAuthButton
  */
 
 @Composable
-fun BindAccounts(
-    authViewModel: AuthViewModel,
-    activity: Activity
+fun BindAccountScreen(
+    authViewModel: AuthViewModel
 ) {
+    val currentActivity = LocalContext.current as Activity
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -39,7 +41,8 @@ fun BindAccounts(
             horizontalAlignment = Alignment.CenterHorizontally) {
 
             Text(
-                modifier = Modifier.wrapContentSize()
+                modifier = Modifier
+                    .wrapContentSize()
                     .padding(8.dp),
                 text = stringResource(R.string.login_page_title),
                 style = TextStyle(fontStyle = FontStyle.Italic),
@@ -49,20 +52,12 @@ fun BindAccounts(
             Spacer(modifier = Modifier.height(16.dp))
 
             // HUAWEI ID LOGIN
-            AndroidView(
-                modifier = Modifier.wrapContentSize(),
-                factory = { context ->
-                    // Creates HUAWEI ID button
-                    HuaweiIdAuthButton(context).apply {
-                        // Sets up listeners for View -> Compose communication
-                        setOnClickListener {
-                            authViewModel.login(
-                                context as Activity,
-                                AGConnectAuthCredential.HMS_Provider
-                            )
-                        }
-                    }
-                })
+            HuaweiLoginIdButton {
+                authViewModel.login(
+                    activity = currentActivity,
+                    credentialType = AGConnectAuthCredential.HMS_Provider
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -82,39 +77,68 @@ fun BindAccounts(
             }*/
 
             //GOOGLE LOGIN
-            AndroidView(
-                modifier = Modifier.wrapContentSize(),
-                factory = { context ->
-                    // Creates Google login button
-                    SignInButton(context).apply {
-                        // Sets up listeners for View -> Compose communication
-                        setOnClickListener {
-                            authViewModel.login(
-                                context as Activity,
-                                AGConnectAuthCredential.Google_Provider
-                            )
-                        }
-                    }
-                })
+            GoogleLoginButton {
+                authViewModel.login(
+                    activity = currentActivity,
+                    credentialType = AGConnectAuthCredential.Google_Provider
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             // FACEBOOK LOGIN
-            AndroidView(
-                modifier = Modifier.wrapContentSize(),
-                factory = { context ->
-                    // Creates Facebook button
-                    LoginButton(context).apply {
-                        // Sets up listeners for View -> Compose communication
-                        setOnClickListener {
-                            authViewModel.login(
-                                context as Activity,
-                                AGConnectAuthCredential.Facebook_Provider
-                            )
-                        }
-                    }
-                })
+            FacebookLoginButton {
+                authViewModel.login(
+                    activity = currentActivity,
+                    credentialType = AGConnectAuthCredential.Facebook_Provider
+                )
+            }
         }
     }
 
+}
+
+@Composable
+private fun GoogleLoginButton(
+    onClickLogin: () -> Unit
+) {
+    AndroidView(
+        modifier = Modifier.wrapContentSize(),
+        factory = { context ->
+            // Creates Google login button
+            SignInButton(context).apply {
+                // Sets up listeners for View -> Compose communication
+                setOnClickListener { onClickLogin() }
+            }
+        })
+}
+
+@Composable
+private fun FacebookLoginButton(
+    onClickLogin: () -> Unit
+) {
+    AndroidView(
+        modifier = Modifier.wrapContentSize(),
+        factory = { context ->
+            // Creates Facebook button
+            LoginButton(context).apply {
+                // Sets up listeners for View -> Compose communication
+                setOnClickListener { onClickLogin() }
+            }
+        })
+}
+
+@Composable
+private fun HuaweiLoginIdButton(
+    onClickLogin: () -> Unit
+) {
+    AndroidView(
+        modifier = Modifier.wrapContentSize(),
+        factory = { context ->
+            // Creates HUAWEI ID button
+            HuaweiIdAuthButton(context).apply {
+                // Sets up listeners for View -> Compose communication
+                setOnClickListener { onClickLogin() }
+            }
+        })
 }

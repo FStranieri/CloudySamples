@@ -43,7 +43,7 @@ import com.skydoves.landscapist.glide.GlideImage
  */
 
 @Composable
-fun BindChat(
+fun ChatScreen(
     authViewModel: AuthViewModel,
     cloudDBViewModel: CloudDBViewModel
 ) {
