@@ -87,7 +87,7 @@ fun ChatScreen(
         Box(
             modifier = Modifier
                 .constrainAs(chatList) {
-                    top.linkTo(title.bottom)
+                    top.linkTo(logoutButton.bottom, 16.dp)
                     bottom.linkTo(inputMessage.top)
                     end.linkTo(parent.end)
                     start.linkTo(parent.start)
@@ -255,8 +255,9 @@ fun BuildMyChatCard(message: FullMessage, cloudDBViewModel: CloudDBViewModel) {
                 Text(
                     text = message.text,
                     color = Color.Black,
-                    fontSize = 18.sp,
-                    modifier = Modifier.constrainAs(text) {
+                    fontSize = 16.sp,
+                    modifier = Modifier
+                        .constrainAs(text) {
                             top.linkTo(parent.top)
                             bottom.linkTo(date.top, 4.dp)
                         }
@@ -284,18 +285,21 @@ fun BuildUsersChatCard(message: FullMessage) {
             shape = RoundedCornerShape(16.dp),
             border = BorderStroke(2.dp, Color(message.color.toColorInt()))
         ) {
-            ConstraintLayout(Modifier.wrapContentWidth()) {
+            ConstraintLayout(
+                Modifier
+                    .wrapContentWidth()
+                    .padding(8.dp)) {
                 val (name, text, pic, date) = createRefs()
                 Text(
                     text = message.nickname,
                     color = Color(message.color.toColorInt()),
-                    fontSize = 22.sp,
+                    fontSize = 18.sp,
                     modifier = Modifier
                         .constrainAs(name) {
                             start.linkTo(parent.start)
                             top.linkTo(parent.top)
                         }
-                        .then(Modifier.padding(8.dp))
+                        .then(Modifier.padding(4.dp))
                 )
 
                 GlideImage(
@@ -331,14 +335,16 @@ fun BuildUsersChatCard(message: FullMessage) {
                 Text(
                     text = message.text,
                     color = Color.Black,
-                    fontSize = 18.sp,
+                    fontSize = 16.sp,
                     modifier = Modifier
+                        .padding(16.dp)
                         .constrainAs(text) {
                             start.linkTo(pic.end, 4.dp)
+                            end.linkTo(date.end)
                             top.linkTo(name.bottom)
                             bottom.linkTo(date.top, 4.dp)
+                            width = Dimension.preferredWrapContent
                         }
-                        .then(Modifier.padding(8.dp, end = 8.dp))
                 )
             }
         }
