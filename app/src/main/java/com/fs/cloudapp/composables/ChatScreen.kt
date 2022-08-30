@@ -256,8 +256,7 @@ fun BuildMyChatCard(message: FullMessage, cloudDBViewModel: CloudDBViewModel) {
                     text = message.text,
                     color = Color.Black,
                     fontSize = 18.sp,
-                    modifier = Modifier.fillMaxWidth()
-                        .constrainAs(text) {
+                    modifier = Modifier.constrainAs(text) {
                             top.linkTo(parent.top)
                             bottom.linkTo(date.top, 4.dp)
                         }
