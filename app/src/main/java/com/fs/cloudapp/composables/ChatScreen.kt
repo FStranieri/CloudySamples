@@ -337,7 +337,7 @@ fun BuildUsersChatCard(message: FullMessage) {
                     color = Color.Black,
                     fontSize = 16.sp,
                     modifier = Modifier
-                        .padding(16.dp)
+                        .padding(8.dp)
                         .constrainAs(text) {
                             start.linkTo(pic.end, 4.dp)
                             end.linkTo(date.end)
