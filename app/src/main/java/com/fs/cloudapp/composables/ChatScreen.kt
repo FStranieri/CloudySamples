@@ -290,23 +290,12 @@ fun BuildUsersChatCard(message: FullMessage) {
                     .wrapContentWidth()
                     .padding(8.dp)) {
                 val (name, text, pic, date) = createRefs()
-                Text(
-                    text = message.nickname,
-                    color = Color(message.color.toColorInt()),
-                    fontSize = 18.sp,
-                    modifier = Modifier
-                        .constrainAs(name) {
-                            start.linkTo(parent.start)
-                            top.linkTo(parent.top)
-                        }
-                        .then(Modifier.padding(4.dp))
-                )
 
                 GlideImage(
                     modifier = Modifier
                         .constrainAs(pic) {
                             start.linkTo(parent.start, 4.dp)
-                            bottom.linkTo(parent.bottom, 4.dp)
+                            top.linkTo(parent.top, 4.dp)
                         }
                         .height(36.dp)
                         .width(36.dp)
@@ -321,9 +310,22 @@ fun BuildUsersChatCard(message: FullMessage) {
                 )
 
                 Text(
+                    text = message.nickname,
+                    color = Color(message.color.toColorInt()),
+                    fontSize = 16.sp,
+                    modifier = Modifier
+                        .constrainAs(name) {
+                            start.linkTo(pic.end)
+                            top.linkTo(pic.top)
+                            bottom.linkTo(pic.bottom)
+                        }
+                        .then(Modifier.padding(4.dp))
+                )
+
+                Text(
                     text = message.formattedDate,
                     color = Color.DarkGray,
-                    fontSize = 10.sp,
+                    fontSize = 8.sp,
                     modifier = Modifier
                         .constrainAs(date) {
                             end.linkTo(parent.end)
@@ -335,13 +337,12 @@ fun BuildUsersChatCard(message: FullMessage) {
                 Text(
                     text = message.text,
                     color = Color.Black,
-                    fontSize = 16.sp,
+                    fontSize = 14.sp,
                     modifier = Modifier
                         .padding(8.dp)
                         .constrainAs(text) {
-                            start.linkTo(pic.end, 4.dp)
                             end.linkTo(date.end)
-                            top.linkTo(name.bottom)
+                            top.linkTo(pic.bottom)
                             bottom.linkTo(date.top, 4.dp)
                             width = Dimension.preferredWrapContent
                         }
