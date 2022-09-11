@@ -4,29 +4,22 @@
  */
 package com.fs.cloudapp.data;
 
+import com.huawei.agconnect.cloud.database.annotations.DefaultValue;
+import com.huawei.agconnect.cloud.database.annotations.NotNull;
+import com.huawei.agconnect.cloud.database.annotations.PrimaryKeys;
 import com.huawei.agconnect.cloud.database.CloudDBZoneObject;
 import com.huawei.agconnect.cloud.database.Text;
-import com.huawei.agconnect.cloud.database.annotations.DefaultValue;
-import com.huawei.agconnect.cloud.database.annotations.EntireEncrypted;
-import com.huawei.agconnect.cloud.database.annotations.NotNull;
-import com.huawei.agconnect.cloud.database.annotations.Indexes;
-import com.huawei.agconnect.cloud.database.annotations.PrimaryKeys;
 
-import java.io.Serializable;
 import java.util.Date;
 
 /**
- * Definition of ObjectType messages.
+ * Definition of ObjectType input_messages.
  *
- * @since 2022-08-03
+ * @since 2022-09-09
  */
 @PrimaryKeys({"id"})
-public final class messages extends CloudDBZoneObject {
-    private Long id;
-
-    @NotNull
-    @DefaultValue(stringValue = "testuser")
-    private String user_id;
+public final class input_messages extends CloudDBZoneObject {
+    private String id;
 
     @NotNull
     @DefaultValue(stringValue = "test")
@@ -36,27 +29,23 @@ public final class messages extends CloudDBZoneObject {
     @DefaultValue(intValue = 0)
     private Integer type;
 
-    public messages() {
-        super(messages.class);
-        this.user_id = "testuser";
+    @NotNull
+    @DefaultValue(stringValue = "test_user")
+    private String user_id;
+
+    public input_messages() {
+        super(input_messages.class);
         this.text = "test";
         this.type = 0;
+        this.user_id = "test_user";
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
-    }
-
-    public void setUser_id(String user_id) {
-        this.user_id = user_id;
-    }
-
-    public String getUser_id() {
-        return user_id;
     }
 
     public void setText(String text) {
@@ -73,6 +62,14 @@ public final class messages extends CloudDBZoneObject {
 
     public Integer getType() {
         return type;
+    }
+
+    public void setUser_id(String user_id) {
+        this.user_id = user_id;
+    }
+
+    public String getUser_id() {
+        return user_id;
     }
 
 }

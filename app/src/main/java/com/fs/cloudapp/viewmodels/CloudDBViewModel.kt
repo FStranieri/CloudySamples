@@ -21,9 +21,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlin.Exception
 
-typealias Message = messages
+typealias Message = input_messages
 typealias User = users
-typealias FullMessage = full_message
+typealias FullMessage = full_messages
 
 class CloudDBViewModel : ViewModel() {
 
@@ -36,8 +36,6 @@ class CloudDBViewModel : ViewModel() {
 
     var userID: String = ""
         private set
-
-    private var messageId: Long = 0L
 
     private var messages: MutableLiveData<List<FullMessage>> = MutableLiveData()
 
@@ -53,13 +51,7 @@ class CloudDBViewModel : ViewModel() {
         try {
             if (snapshotObjects != null) {
                 while (snapshotObjects.hasNext()) {
-                    val message = snapshotObjects.next()
-
-                    if (messageId <= message.id) {
-                        messageId = message.id
-                    }
-
-                    messagesList.add(message)
+                    messagesList.add(snapshotObjects.next())
                 }
             }
             this.messages.postValue(messagesList.sortedBy { it.date_ins })
@@ -141,10 +133,8 @@ class CloudDBViewModel : ViewModel() {
     }
 
     fun sendMessage(text: String) {
-        messageId++
-
         val message = Message().apply {
-            this.id = messageId
+            this.id = ""
             this.text = text
             this.user_id = userID
             this.type = 0
@@ -202,13 +192,7 @@ class CloudDBViewModel : ViewModel() {
         val messagesList: MutableList<FullMessage> = ArrayList()
         try {
             while (messagesCursor.hasNext()) {
-                val message = messagesCursor.next()
-
-                if (messageId <= message.id) {
-                    messageId = message.id
-                }
-
-                messagesList.add(message)
+                messagesList.add(messagesCursor.next())
             }
         } catch (e: AGConnectCloudDBException) {
             Log.w(TAG, "processQueryResult: " + e.message)
@@ -220,14 +204,7 @@ class CloudDBViewModel : ViewModel() {
     }
 
     fun deleteMessage(message: FullMessage) {
-        val messToDelete = Message().apply {
-            id = message.id
-            text = message.text
-            type = message.type
-            user_id = message.user_id
-        }
-
-        val deleteTask = this.DBZone!!.executeDelete(messToDelete)
+        val deleteTask = this.DBZone!!.executeDelete(message)
         deleteTask.addOnSuccessListener {
             Log.i(TAG, "Delete message ${message.id} succeed!")
         }.addOnFailureListener {

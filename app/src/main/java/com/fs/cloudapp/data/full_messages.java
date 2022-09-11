@@ -4,27 +4,24 @@
  */
 package com.fs.cloudapp.data;
 
+import com.huawei.agconnect.cloud.database.annotations.DefaultValue;
+import com.huawei.agconnect.cloud.database.annotations.NotNull;
+import com.huawei.agconnect.cloud.database.annotations.PrimaryKeys;
 import com.huawei.agconnect.cloud.database.CloudDBZoneObject;
 import com.huawei.agconnect.cloud.database.Text;
-import com.huawei.agconnect.cloud.database.annotations.DefaultValue;
-import com.huawei.agconnect.cloud.database.annotations.EntireEncrypted;
-import com.huawei.agconnect.cloud.database.annotations.NotNull;
-import com.huawei.agconnect.cloud.database.annotations.Indexes;
-import com.huawei.agconnect.cloud.database.annotations.PrimaryKeys;
 
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * Definition of ObjectType full_message.
+ * Definition of ObjectType full_messages.
  *
- * @since 2022-08-06
+ * @since 2022-09-09
  */
 @PrimaryKeys({"id"})
-@Indexes({"date_index:date_ins", "id:id"})
-public final class full_message extends CloudDBZoneObject implements Serializable {
-    private Long id;
+public final class full_messages extends CloudDBZoneObject implements Serializable {
+    private String id;
 
     @NotNull
     @DefaultValue(stringValue = "test")
@@ -35,7 +32,7 @@ public final class full_message extends CloudDBZoneObject implements Serializabl
     private Integer type;
 
     @NotNull
-    @DefaultValue(stringValue = "test")
+    @DefaultValue(stringValue = "test_user")
     private String nickname;
 
     private String email;
@@ -44,32 +41,32 @@ public final class full_message extends CloudDBZoneObject implements Serializabl
 
     private String picture_url;
 
+    @NotNull
+    @DefaultValue(stringValue = "#ffffff")
     private String color;
 
-    @NotNull
-    @DefaultValue(stringValue = "1")
     private String credential_provider_id;
 
     private Date date_ins;
 
     @NotNull
-    @DefaultValue(stringValue = "test")
+    @DefaultValue(stringValue = "test_user")
     private String user_id;
 
-    public full_message() {
-        super(full_message.class);
+    public full_messages() {
+        super(full_messages.class);
         this.text = "test";
         this.type = 0;
-        this.nickname = "test";
-        this.credential_provider_id = "1";
-        this.user_id = "test";
+        this.nickname = "test_user";
+        this.color = "#ffffff";
+        this.user_id = "test_user";
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
@@ -157,5 +154,4 @@ public final class full_message extends CloudDBZoneObject implements Serializabl
         SimpleDateFormat formatter = new SimpleDateFormat("dd.MM.yyyy HH:mm");
         return formatter.format(date_ins);
     }
-
 }
