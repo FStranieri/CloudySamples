@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Fastfood
 import androidx.compose.material.icons.outlined.Send
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -36,7 +37,9 @@ import com.fs.cloudapp.R
 import com.fs.cloudapp.viewmodels.AuthViewModel
 import com.fs.cloudapp.viewmodels.CloudDBViewModel
 import com.fs.cloudapp.viewmodels.FullMessage
+import com.fs.cloudapp.viewmodels.PollLunchChoices
 import com.skydoves.landscapist.glide.GlideImage
+import org.json.JSONObject
 
 /**
  * Chat screen using Cloud DB to store and read messages.
@@ -51,9 +54,12 @@ fun ChatScreen(
         val (title,
             logoutButton,
             chatList,
+            lunchChoicesBox,
             inputMessage,
             textToEdit) = createRefs()
-        val messagesValue by cloudDBViewModel.getChatMessages().observeAsState()
+        val messagesValue by cloudDBViewModel.messages.observeAsState()
+        val lunchChoices by cloudDBViewModel.lunchChoices.observeAsState()
+        val cloudState by cloudDBViewModel.state.collectAsState()
         val lazyListState = rememberLazyListState()
 
         Text(
@@ -106,10 +112,46 @@ fun ChatScreen(
                     items(list.toList(), key = {
                         it
                     }) { message ->
-                        if (message.user_id == cloudDBViewModel.userID) {
-                            BuildMyChatCard(message = message, cloudDBViewModel)
-                        } else {
-                            BuildUsersChatCard(message = message)
+                        if (message.type == 0) {
+                            if (message.user_id == cloudDBViewModel.userID) {
+                                BuildMyChatCard(message = message, cloudDBViewModel)
+                            } else {
+                                BuildUsersChatCard(message = message)
+                            }
+                        } else if (message.type == 1) {
+                            BuildLunchPollChatCard(message = message)
+                        }
+                    }
+                }
+            }
+        }
+
+        if (cloudState.showLunchChoices) {
+            Box(
+                modifier = Modifier
+                    .constrainAs(lunchChoicesBox) {
+                        top.linkTo(logoutButton.bottom, 16.dp)
+                        bottom.linkTo(inputMessage.top, 16.dp)
+                        end.linkTo(parent.end, 16.dp)
+                        start.linkTo(parent.start, 16.dp)
+                        width = Dimension.fillToConstraints
+                        height = Dimension.fillToConstraints
+                    }
+                    .padding(16.dp)
+                    .background(Color.Blue),
+                contentAlignment = Alignment.Center
+            ) {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    lunchChoices?.let { list ->
+                        items(list.toList(), key = {
+                            it
+                        }) { lunchChoice ->
+                            BuildLunchPollChoice(
+                                choice = lunchChoice,
+                                cloudDBViewModel = cloudDBViewModel
+                            )
                         }
                     }
                 }
@@ -150,6 +192,16 @@ fun ChatScreen(
                             contentDescription = null
                         )
                     }
+                }
+            },
+            leadingIcon = {
+                IconButton(onClick = {
+                    cloudDBViewModel.setLunchChoicesVisibility(true)
+                }) {
+                    Icon(
+                        imageVector = Icons.Outlined.Fastfood,
+                        contentDescription = null
+                    )
                 }
             }
         )
@@ -288,7 +340,8 @@ fun BuildUsersChatCard(message: FullMessage) {
             ConstraintLayout(
                 Modifier
                     .wrapContentWidth()
-                    .padding(8.dp)) {
+                    .padding(8.dp)
+            ) {
                 val (name, text, pic, date) = createRefs()
 
                 GlideImage(
@@ -349,5 +402,188 @@ fun BuildUsersChatCard(message: FullMessage) {
                 )
             }
         }
+    }
+}
+
+@Composable
+fun BuildLunchPollChatCard(message: FullMessage) {
+    ConstraintLayout(
+        Modifier
+            .height(200.dp)
+            .fillMaxWidth()) {
+        val (card) = createRefs()
+        Card(
+            modifier = Modifier
+                .wrapContentSize()
+                .constrainAs(card) {
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                },
+            backgroundColor = Color.Blue,
+            elevation = 4.dp,
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            ConstraintLayout(
+                Modifier
+                    .wrapContentWidth()
+                    .padding(8.dp)
+            ) {
+                val (name, polls, pic, date) = createRefs()
+
+                GlideImage(
+                    modifier = Modifier
+                        .constrainAs(pic) {
+                            start.linkTo(parent.start, 4.dp)
+                            top.linkTo(parent.top, 4.dp)
+                        }
+                        .height(36.dp)
+                        .width(36.dp)
+                        .clip(CircleShape),
+                    imageModel = message.picture_url,
+                    // Crop, Fit, Inside, FillHeight, FillWidth, None
+                    contentScale = ContentScale.Crop,
+                    // shows a placeholder ImageBitmap when loading.
+                    placeHolder = painterResource(R.drawable.ic_baseline_account_circle_24),
+                    // shows an error ImageBitmap when the request failed.
+                    error = painterResource(R.drawable.ic_baseline_account_circle_24)
+                )
+
+                Text(
+                    text = message.nickname,
+                    color = Color(message.color.toColorInt()),
+                    fontSize = 16.sp,
+                    modifier = Modifier
+                        .constrainAs(name) {
+                            start.linkTo(pic.end)
+                            top.linkTo(pic.top)
+                            bottom.linkTo(pic.bottom)
+                        }
+                        .then(Modifier.padding(4.dp))
+                )
+
+                Text(
+                    text = message.formattedDate,
+                    color = Color.White,
+                    fontSize = 8.sp,
+                    modifier = Modifier
+                        .constrainAs(date) {
+                            end.linkTo(parent.end)
+                            bottom.linkTo(parent.bottom)
+                        }
+                        .then(Modifier.padding(8.dp))
+                )
+
+                val json = JSONObject(message.text)
+                val maxValue = json["max"] as Int
+                val pollsList = json["polls"] as JSONObject
+
+                LazyColumn(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .constrainAs(polls) {
+                            end.linkTo(date.end)
+                            top.linkTo(pic.bottom)
+                            bottom.linkTo(date.top, 4.dp)
+                            width = Dimension.preferredWrapContent
+                        },
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(pollsList.keys().toList(), key = {
+                        it
+                    }) { key ->
+                        BuildLunchPoll(
+                            name = key,
+                            value = pollsList[key] as Int,
+                            maxValue = maxValue
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+fun Iterator<String>.toList() = run {
+    val list = mutableListOf<String>()
+    while (this.hasNext()) {
+        list.add(this.next())
+    }
+    list
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun BuildLunchPollChoice(choice: PollLunchChoices, cloudDBViewModel: CloudDBViewModel) {
+    ConstraintLayout(Modifier.fillMaxWidth()) {
+        val (card) = createRefs()
+
+        Card(
+            modifier = Modifier
+                .wrapContentWidth()
+                .constrainAs(card) {
+                    end.linkTo(parent.end)
+                    start.linkTo(parent.start)
+                    width = Dimension.preferredWrapContent
+                    height = Dimension.preferredWrapContent
+                }
+                .combinedClickable(
+                    onClick = {
+                        cloudDBViewModel.setLunchChoicesVisibility(false)
+                        cloudDBViewModel.sendPollLunchChoice(choice)
+                    },
+                    onLongClick = {}
+                ),
+            backgroundColor = Color("#E8D100".toColorInt()),
+            elevation = 4.dp,
+            shape = RoundedCornerShape(8.dp),
+        ) {
+            ConstraintLayout(Modifier.wrapContentWidth()) {
+                val (text) = createRefs()
+
+                Text(
+                    text = choice.name,
+                    color = Color.DarkGray,
+                    fontSize = 30.sp,
+                    modifier = Modifier
+                        .constrainAs(text) {
+                            end.linkTo(parent.end)
+                            start.linkTo(parent.start)
+                            bottom.linkTo(parent.bottom)
+                            top.linkTo(parent.top)
+                        }
+                        .then(Modifier.padding(8.dp))
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun BuildLunchPoll(name: String, value: Int, maxValue: Int) {
+    ConstraintLayout(Modifier.wrapContentSize()) {
+        val (choice, progress) = createRefs()
+
+        Text(
+            text = "$name ($value)",
+            color = Color.White,
+            fontSize = 16.sp,
+            modifier = Modifier
+                .constrainAs(choice) {
+                    start.linkTo(parent.start)
+                    top.linkTo(parent.top)
+                }
+        )
+
+        LinearProgressIndicator(
+            backgroundColor = Color.Blue,
+            progress = value.toFloat() / maxValue.toFloat(),
+            color = Color("#E8D100".toColorInt()),
+            modifier = Modifier
+                .constrainAs(progress) {
+                    start.linkTo(choice.start)
+                    top.linkTo(choice.bottom, 4.dp)
+                }
+        )
     }
 }

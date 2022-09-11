@@ -18,7 +18,10 @@ import java.util.List;
  */
 public final class ObjectTypeInfoHelper {
     private static final int FORMAT_VERSION = 2;
-    private static final int OBJECT_TYPE_VERSION = 23;
+    private static final int OBJECT_TYPE_VERSION = 27;
+
+    public static final int MESSAGE_TYPE_STANDARD = 0;
+    public static final int MESSAGE_TYPE_POLL = 1;
 
     public static ObjectTypeInfo getObjectTypeInfo() {
         ObjectTypeInfo objectTypeInfo = new ObjectTypeInfo();
@@ -29,7 +32,9 @@ public final class ObjectTypeInfoHelper {
                 user_push_tokens.class,
                 input_messages.class,
                 users.class,
-                full_messages.class);
+                full_messages.class,
+                poll_lunch.class,
+                poll_lunch_choices.class);
         objectTypeInfo.setObjectTypes(objectTypeList);
         return objectTypeInfo;
     }

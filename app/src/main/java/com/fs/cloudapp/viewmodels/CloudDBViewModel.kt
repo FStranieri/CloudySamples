@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -24,6 +23,8 @@ import kotlin.Exception
 typealias Message = input_messages
 typealias User = users
 typealias FullMessage = full_messages
+typealias PollLunchChoices = poll_lunch_choices
+typealias PollLunch = poll_lunch
 
 class CloudDBViewModel : ViewModel() {
 
@@ -37,29 +38,18 @@ class CloudDBViewModel : ViewModel() {
     var userID: String = ""
         private set
 
-    private var messages: MutableLiveData<List<FullMessage>> = MutableLiveData()
+    var messages: MutableLiveData<List<FullMessage>> = MutableLiveData()
+    private set
+
+    var lunchChoices: MutableLiveData<List<PollLunchChoices>> = MutableLiveData()
+    private set
 
     private var loadingProgress: MutableState<Boolean> = mutableStateOf(false)
 
-    private val mSnapshotListener = OnSnapshotListener<FullMessage> { cloudDBZoneSnapshot, e ->
-        if (e != null) {
-            Log.w(TAG, "onSnapshot: " + e.message)
-            return@OnSnapshotListener
-        }
-        val snapshotObjects = cloudDBZoneSnapshot.snapshotObjects
-        val messagesList: MutableList<FullMessage> = ArrayList()
-        try {
-            if (snapshotObjects != null) {
-                while (snapshotObjects.hasNext()) {
-                    messagesList.add(snapshotObjects.next())
-                }
-            }
-            this.messages.postValue(messagesList.sortedBy { it.date_ins })
-        } catch (snapshotException: AGConnectCloudDBException) {
-            Log.w(TAG, "onSnapshot:(getObject) " + snapshotException.message)
-        } finally {
-            cloudDBZoneSnapshot.release()
-        }
+    private val mSnapshotListener = OnSnapshotListener<FullMessage> { cloudDBZoneSnapshot, err ->
+        err?.let {
+            Log.w(TAG, "onSnapshot: " + err.message)
+        } ?: processQueryResult(cloudDBZoneSnapshot)
     }
 
     var messageToEdit: MutableState<FullMessage?> = mutableStateOf(null)
@@ -137,7 +127,7 @@ class CloudDBViewModel : ViewModel() {
             this.id = ""
             this.text = text
             this.user_id = userID
-            this.type = 0
+            this.type = ObjectTypeInfoHelper.MESSAGE_TYPE_STANDARD
         }
 
         sendMessageOnCloud(message)
@@ -168,7 +158,9 @@ class CloudDBViewModel : ViewModel() {
 
     fun getAllMessages() {
         val query = CloudDBZoneQuery.where(FullMessage::class.java)
-            .equalTo("type", 0)
+            .equalTo("type", ObjectTypeInfoHelper.MESSAGE_TYPE_STANDARD)
+            .or()
+            .equalTo("type", ObjectTypeInfoHelper.MESSAGE_TYPE_POLL)
         //not supported by the subscription
         //.orderByDesc("date_ins")
 
@@ -188,19 +180,8 @@ class CloudDBViewModel : ViewModel() {
     }
 
     private fun processQueryResult(snapshot: CloudDBZoneSnapshot<FullMessage>) {
-        val messagesCursor = snapshot.snapshotObjects
-        val messagesList: MutableList<FullMessage> = ArrayList()
-        try {
-            while (messagesCursor.hasNext()) {
-                messagesList.add(messagesCursor.next())
-            }
-        } catch (e: AGConnectCloudDBException) {
-            Log.w(TAG, "processQueryResult: " + e.message)
-        } finally {
-            snapshot.release()
-        }
-
-        messages.value = messagesList.sortedBy { it.date_ins }
+        val messagesList = snapshot.toList()
+        messages.postValue(messagesList.sortedBy { it.date_ins })
     }
 
     fun deleteMessage(message: FullMessage) {
@@ -229,8 +210,57 @@ class CloudDBViewModel : ViewModel() {
         updateState(state.value.copy(failureOutput = null))
     }
 
-    fun getChatMessages(): LiveData<List<FullMessage>> {
-        return this.messages
+    private fun getPollLunchChoices() {
+        val query = CloudDBZoneQuery.where(PollLunchChoices::class.java)
+
+        val queryTask = this.DBZone!!.executeQuery(
+            query,
+            CloudDBZoneQuery.CloudDBZoneQueryPolicy.POLICY_QUERY_DEFAULT
+        )
+
+        queryTask.addOnSuccessListener { snapshot ->
+            lunchChoices.postValue(snapshot.toList())
+        }.addOnFailureListener {
+            updateState(state.value.copy(failureOutput = it))
+        }
+    }
+
+    fun sendPollLunchChoice(pollLunchChoice: PollLunchChoices) {
+        val upsertTask = this.DBZone!!.executeUpsert(PollLunch().apply {
+            user_id = userID
+            choice = pollLunchChoice.name
+        })
+        upsertTask.addOnSuccessListener { cloudDBZoneResult ->
+            Log.i(TAG, "Upsert $cloudDBZoneResult records")
+        }.addOnFailureListener {
+            val err = it as AGConnectCloudDBException
+            Log.e(TAG, "${err.code}: ${err.message}")
+        }
+    }
+
+    fun setLunchChoicesVisibility(visible: Boolean) {
+        if (visible) {
+            getPollLunchChoices()
+        }
+
+        updateState(mState.value.copy(showLunchChoices = visible))
+    }
+
+    private fun <T : CloudDBZoneObject> CloudDBZoneSnapshot<T>.toList() = run {
+        val cursor = this.snapshotObjects
+        val list = mutableListOf<T>()
+
+        try {
+            while (cursor.hasNext()) {
+                list.add(cursor.next())
+            }
+        } catch (e: AGConnectCloudDBException) {
+            Log.w(TAG, "processQueryResult: " + e.message)
+        } finally {
+            this.release()
+        }
+
+        list
     }
 
     fun getLoadingProgress(): MutableState<Boolean> {
@@ -255,6 +285,8 @@ class CloudDBViewModel : ViewModel() {
 
     data class CloudState(
         val dbReady: Boolean = false,
+        val showLunchChoices: Boolean = false,
         val failureOutput: Exception? = null
     )
 }
+
