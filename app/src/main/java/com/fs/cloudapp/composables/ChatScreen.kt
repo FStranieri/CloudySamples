@@ -409,7 +409,7 @@ fun BuildUsersChatCard(message: FullMessage) {
 fun BuildLunchPollChatCard(message: FullMessage) {
     ConstraintLayout(
         Modifier
-            .height(200.dp)
+            .wrapContentHeight()
             .fillMaxWidth()) {
         val (card) = createRefs()
         Card(
@@ -479,6 +479,7 @@ fun BuildLunchPollChatCard(message: FullMessage) {
 
                 LazyColumn(
                     modifier = Modifier
+                        .height(150.dp)
                         .padding(8.dp)
                         .constrainAs(polls) {
                             end.linkTo(date.end)

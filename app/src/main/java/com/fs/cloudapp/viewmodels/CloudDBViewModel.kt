@@ -48,7 +48,7 @@ class CloudDBViewModel : ViewModel() {
 
     private val mSnapshotListener = OnSnapshotListener<FullMessage> { cloudDBZoneSnapshot, err ->
         err?.let {
-            Log.w(TAG, "onSnapshot: " + err.message)
+            Log.w(TAG, "onSnapshot: ${err.message}")
         } ?: processQueryResult(cloudDBZoneSnapshot)
     }
 

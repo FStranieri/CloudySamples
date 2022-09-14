@@ -17,13 +17,12 @@ import kotlinx.coroutines.launch
 
 class AuthViewModel : ViewModel() {
 
+    var authInstance: AGConnectAuth = AGConnectAuth.getInstance()
+        private set
+
     private val mState = MutableStateFlow(value = AuthState())
     val state: StateFlow<AuthState>
         get() = mState
-
-
-    var authInstance: AGConnectAuth = AGConnectAuth.getInstance()
-        private set
 
     init {
         val previousInstanceAlive = this.authInstance.currentUser != null
@@ -44,7 +43,6 @@ class AuthViewModel : ViewModel() {
             // onFailure
             updateState(state.value.copy(failureOutput = it))
         }
-
     }
 
     fun loginWithCredentials(credential: AGConnectAuthCredential) {
