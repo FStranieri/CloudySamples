@@ -64,7 +64,6 @@ class MainActivity : ComponentActivity() {
                 if (cloudState.dbReady) {
                     //store the user credentials ONLY if it's the very 1st login
                     if(!authState.previousInstanceAlive) {
-                        cloudDBViewModel.saveUser(authViewModel.authInstance.currentUser)
                         getPushToken(cloudDBViewModel)
                     }
 

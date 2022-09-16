@@ -479,7 +479,7 @@ fun BuildLunchPollChatCard(message: FullMessage) {
 
                 LazyColumn(
                     modifier = Modifier
-                        .height(150.dp)
+                        .height(120.dp)
                         .padding(8.dp)
                         .constrainAs(polls) {
                             end.linkTo(date.end)

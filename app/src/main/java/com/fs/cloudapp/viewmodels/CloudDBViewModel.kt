@@ -92,6 +92,7 @@ class CloudDBViewModel : ViewModel() {
         }
     }
 
+    //not used since when the user login is triggered, the cloud function stores the data in DB
     fun saveUser(credentials: AGConnectUser) {
         val user = User().apply {
             id = credentials.uid
