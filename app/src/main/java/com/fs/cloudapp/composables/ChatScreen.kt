@@ -84,7 +84,6 @@ fun ChatScreen(
                 height = Dimension.wrapContent
             }, // Occupy the max size in the Compose UI tree
             onClick = {
-                cloudDBViewModel.deleteUser(authViewModel.authInstance.currentUser.uid)
                 authViewModel.logout()
             }) {
             Text(text = stringResource(R.string.logout_button_text), fontSize = 8.sp)

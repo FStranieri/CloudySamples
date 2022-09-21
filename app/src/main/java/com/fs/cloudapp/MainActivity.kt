@@ -8,7 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.*
-import com.fs.cloudapp.composables.BindAccountScreen
+import com.fs.cloudapp.composables.LoginScreen
 import com.fs.cloudapp.composables.ChatScreen
 import com.fs.cloudapp.data.user_push_tokens
 import com.fs.cloudapp.viewmodels.AuthViewModel
@@ -62,26 +62,27 @@ class MainActivity : ComponentActivity() {
 
                 //if the db is initialized continue with the flow
                 if (cloudState.dbReady) {
-                    //store the user credentials ONLY if it's the very 1st login
-                    if(!authState.previousInstanceAlive) {
-                        getPushToken(cloudDBViewModel)
+                    if (!cloudState.userDataAvailable) {
+                        cloudDBViewModel.getUserDataAvailability()
+                    } else {
+                        //store the user credentials ONLY if it's the very 1st login
+                        if (!authState.previousInstanceAlive) {
+                            getPushToken(cloudDBViewModel)
+                        }
+
+                        //compose the Chat screen
+                        ChatScreen(
+                            authViewModel = authViewModel,
+                            cloudDBViewModel = cloudDBViewModel
+                        )
+
+                        //get all messages only for the 1st time, then a listener will be registered
+                        cloudDBViewModel.getAllMessages()
                     }
-
-                    //compose the Chat screen
-                    ChatScreen(authViewModel= authViewModel, cloudDBViewModel = cloudDBViewModel)
-
-                    //get all messages only for the 1st time, then a listener will be registered
-                    cloudDBViewModel.getAllMessages()
                 }
             } else {
-                BindAccountScreen(authViewModel = authViewModel)
+                LoginScreen(authViewModel = authViewModel)
             }
-
-            /*DisposableEffect(key1 = cloudDBViewModel) {
-                onDispose {
-                    //cloudDBViewModel.closeDB()
-                }
-            }*/
         }
     }
 

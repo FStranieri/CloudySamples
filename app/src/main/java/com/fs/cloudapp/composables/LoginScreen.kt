@@ -28,7 +28,7 @@ import com.huawei.hms.support.hwid.ui.HuaweiIdAuthButton
  */
 
 @Composable
-fun BindAccountScreen(
+fun LoginScreen(
     authViewModel: AuthViewModel
 ) {
     val currentActivity = LocalContext.current as Activity

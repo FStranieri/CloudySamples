@@ -39,10 +39,10 @@ class CloudDBViewModel : ViewModel() {
         private set
 
     var messages: MutableLiveData<List<FullMessage>> = MutableLiveData()
-    private set
+        private set
 
     var lunchChoices: MutableLiveData<List<PollLunchChoices>> = MutableLiveData()
-    private set
+        private set
 
     private var loadingProgress: MutableState<Boolean> = mutableStateOf(false)
 
@@ -169,15 +169,18 @@ class CloudDBViewModel : ViewModel() {
             query,
             CloudDBZoneQuery.CloudDBZoneQueryPolicy.POLICY_QUERY_DEFAULT
         )
-        queryTask.addOnSuccessListener { snapshot -> processQueryResult(snapshot) }
+        queryTask.addOnSuccessListener { snapshot ->
+            processQueryResult(snapshot)
+
+            DBZone!!.subscribeSnapshot(
+                query,
+                CloudDBZoneQuery.CloudDBZoneQueryPolicy.POLICY_QUERY_FROM_CLOUD_ONLY,
+                mSnapshotListener
+            )
+        }
             .addOnFailureListener {
                 updateState(state.value.copy(failureOutput = it))
             }
-
-        this.DBZone!!.subscribeSnapshot(
-            query,
-            CloudDBZoneQuery.CloudDBZoneQueryPolicy.POLICY_QUERY_FROM_CLOUD_ONLY, mSnapshotListener
-        )
     }
 
     private fun processQueryResult(snapshot: CloudDBZoneSnapshot<FullMessage>) {
@@ -194,6 +197,7 @@ class CloudDBViewModel : ViewModel() {
         }
     }
 
+    //not used since when the user logout is triggered, the cloud function deletes the data in DB
     fun deleteUser(id: String) {
         val userToDelete = User().apply {
             this.id = id
@@ -204,6 +208,23 @@ class CloudDBViewModel : ViewModel() {
             Log.i(TAG, "Delete user ${userToDelete.id} succeed!")
         }.addOnFailureListener {
             Log.e(TAG, "Delete user error: ", it)
+        }
+    }
+
+    fun getUserDataAvailability() {
+        val query = CloudDBZoneQuery.where(User::class.java)
+            .equalTo("id", this.userID)
+
+        val queryTask = this.DBZone!!.executeQuery(
+            query,
+            CloudDBZoneQuery.CloudDBZoneQueryPolicy.POLICY_QUERY_FROM_CLOUD_ONLY
+        )
+
+        queryTask.addOnSuccessListener { snapshot ->
+            updateState(mState.value.copy(userDataAvailable =
+            (snapshot.snapshotObjects?.size() ?: 0) > 0))
+        }.addOnFailureListener {
+            updateState(state.value.copy(failureOutput = it))
         }
     }
 
@@ -286,6 +307,7 @@ class CloudDBViewModel : ViewModel() {
 
     data class CloudState(
         val dbReady: Boolean = false,
+        val userDataAvailable: Boolean = false,
         val showLunchChoices: Boolean = false,
         val failureOutput: Exception? = null
     )
