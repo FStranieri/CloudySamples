@@ -31,7 +31,6 @@ android {
 
     buildTypes {
         debug {
-            minifyEnabled false
             signingConfig signingConfigs.debug
         }
         release {
@@ -105,6 +104,9 @@ dependencies {
 
     //PUSH KIT
     implementation 'com.huawei.hms:push:6.5.0.300'
+
+    //ML KIT TRANSLATION
+    implementation 'com.huawei.hms:ml-computer-translate:3.7.0.301'
 
     //GLIDE
     implementation "com.github.skydoves:landscapist-glide:1.6.0"

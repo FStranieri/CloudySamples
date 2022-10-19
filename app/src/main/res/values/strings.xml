@@ -7,4 +7,6 @@
     <string name="logout_button_text">LOGOUT</string>
     <string name="delete_message_option_text">Delete</string>
     <string name="edit_message_option_text">Edit</string>
+    <string name="translate_message_option_text">Translate</string>
+    <string name="translation_close_popup">Close</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.fs.cloudapp.composables
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
@@ -20,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -27,17 +29,16 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.core.graphics.toColorInt
 import com.fs.cloudapp.R
-import com.fs.cloudapp.viewmodels.AuthViewModel
-import com.fs.cloudapp.viewmodels.CloudDBViewModel
-import com.fs.cloudapp.viewmodels.FullMessage
-import com.fs.cloudapp.viewmodels.PollLunchChoices
+import com.fs.cloudapp.viewmodels.*
 import com.skydoves.landscapist.glide.GlideImage
 import org.json.JSONObject
 
@@ -48,7 +49,8 @@ import org.json.JSONObject
 @Composable
 fun ChatScreen(
     authViewModel: AuthViewModel,
-    cloudDBViewModel: CloudDBViewModel
+    cloudDBViewModel: CloudDBViewModel,
+    translationViewModel: TextTranslationViewModel
 ) {
     ConstraintLayout(Modifier.fillMaxSize()) {
         val (title,
@@ -56,10 +58,12 @@ fun ChatScreen(
             chatList,
             lunchChoicesBox,
             inputMessage,
-            textToEdit) = createRefs()
+            textToEdit,
+            translationBox) = createRefs()
         val messagesValue by cloudDBViewModel.messages.observeAsState()
         val lunchChoices by cloudDBViewModel.lunchChoices.observeAsState()
         val cloudState by cloudDBViewModel.state.collectAsState()
+        val translationState by translationViewModel.state.collectAsState()
         val lazyListState = rememberLazyListState()
 
         Text(
@@ -115,7 +119,7 @@ fun ChatScreen(
                             if (message.user_id == cloudDBViewModel.userID) {
                                 BuildMyChatCard(message = message, cloudDBViewModel)
                             } else {
-                                BuildUsersChatCard(message = message)
+                                BuildUsersChatCard(message = message, translationViewModel)
                             }
                         } else if (message.type == 1) {
                             BuildLunchPollChatCard(message = message)
@@ -241,6 +245,57 @@ fun ChatScreen(
                 fontWeight = FontWeight.Bold
             )
         }
+
+        if (translationState.showTranslation) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .constrainAs(translationBox) {
+                        top.linkTo(parent.top, 16.dp)
+                        bottom.linkTo(parent.bottom, 16.dp)
+                        end.linkTo(parent.end, 16.dp)
+                        start.linkTo(parent.start, 16.dp)
+                    }
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                ConstraintLayout(
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 200.dp)
+                        .background(colorResource(R.color.users_card_color), shape = RoundedCornerShape(12.dp))
+                        .border(width = 8.dp, color = Color.Black, shape = RoundedCornerShape(16.dp))
+                ) {
+                    val (text, close) = createRefs()
+                    val scroll = rememberScrollState(0)
+
+                    Button(
+                        modifier = Modifier.constrainAs(close) {
+                            end.linkTo(parent.end, 8.dp)
+                            top.linkTo(parent.top, 8.dp)
+                        },
+                        onClick = { translationViewModel.resetTranslationVisibility() }) {
+                        Text(text = stringResource(R.string.translation_close_popup))
+                    }
+
+                    Text(
+                        text = translationViewModel.translation ?: "",
+                        color = Color.Black,
+                        fontSize = 30.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .constrainAs(text) {
+                                bottom.linkTo(parent.bottom, 8.dp)
+                                start.linkTo(parent.start, 8.dp)
+                                end.linkTo(parent.end, 8.dp)
+                                top.linkTo(close.bottom, 8.dp)
+                            }
+                            .then(Modifier.padding(8.dp))
+                            .then(Modifier.verticalScroll(scroll))
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -319,10 +374,13 @@ fun BuildMyChatCard(message: FullMessage, cloudDBViewModel: CloudDBViewModel) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun BuildUsersChatCard(message: FullMessage) {
+fun BuildUsersChatCard(message: FullMessage, translationViewModel: TextTranslationViewModel) {
     ConstraintLayout(Modifier.fillMaxWidth()) {
         val (card) = createRefs()
+        var showOptions by remember { mutableStateOf(false) }
+
         Card(
             modifier = Modifier
                 .widthIn(max = 300.dp)
@@ -330,8 +388,12 @@ fun BuildUsersChatCard(message: FullMessage) {
                     start.linkTo(parent.start)
                     width = Dimension.preferredWrapContent
                     height = Dimension.preferredWrapContent
-                },
-            backgroundColor = Color("#009BAF".toColorInt()),
+                }
+                .combinedClickable(
+                    onClick = { },
+                    onLongClick = { showOptions = true }
+                ),
+            backgroundColor = colorResource(R.color.users_card_color),
             elevation = 4.dp,
             shape = RoundedCornerShape(16.dp),
             border = BorderStroke(2.dp, Color(message.color.toColorInt()))
@@ -341,7 +403,22 @@ fun BuildUsersChatCard(message: FullMessage) {
                     .wrapContentWidth()
                     .padding(8.dp)
             ) {
-                val (name, text, pic, date) = createRefs()
+                val (name, text, pic, date, menu) = createRefs()
+
+                DropdownMenu(
+                    expanded = showOptions,
+                    onDismissRequest = { showOptions = false },
+                    modifier = Modifier
+                        .constrainAs(menu) {}
+                        .then(Modifier.background(color = Color("#E18701".toColorInt())))
+                ) {
+                    DropdownMenuItem(onClick = {
+                        translationViewModel.translate(message.text)
+                        showOptions = false
+                    }) {
+                        Text(stringResource(R.string.translate_message_option_text))
+                    }
+                }
 
                 GlideImage(
                     modifier = Modifier
@@ -409,7 +486,8 @@ fun BuildLunchPollChatCard(message: FullMessage) {
     ConstraintLayout(
         Modifier
             .wrapContentHeight()
-            .fillMaxWidth()) {
+            .fillMaxWidth()
+    ) {
         val (card) = createRefs()
         Card(
             modifier = Modifier

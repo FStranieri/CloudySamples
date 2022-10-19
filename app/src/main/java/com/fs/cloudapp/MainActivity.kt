@@ -8,11 +8,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.*
+import androidx.compose.ui.res.stringResource
 import com.fs.cloudapp.composables.LoginScreen
 import com.fs.cloudapp.composables.ChatScreen
 import com.fs.cloudapp.data.user_push_tokens
 import com.fs.cloudapp.viewmodels.AuthViewModel
 import com.fs.cloudapp.viewmodels.CloudDBViewModel
+import com.fs.cloudapp.viewmodels.TextTranslationViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.tasks.Task
@@ -20,6 +22,7 @@ import com.huawei.agconnect.api.AGConnectApi
 import com.huawei.agconnect.auth.GoogleAuthProvider
 import com.huawei.hms.aaid.HmsInstanceId
 import com.huawei.hms.common.ApiException
+import com.huawei.hms.mlsdk.common.MLApplication
 
 
 class MainActivity : ComponentActivity() {
@@ -29,9 +32,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        MLApplication.initialize (applicationContext)
+        MLApplication.getInstance ().apiKey = resources.getString(R.string.huawei_api_key)
+
         setContent {
             val authViewModel: AuthViewModel by viewModels()
             val cloudDBViewModel: CloudDBViewModel by viewModels()
+            val translationViewModel: TextTranslationViewModel by viewModels()
             val authState by authViewModel.state.collectAsState()
             val cloudState by cloudDBViewModel.state.collectAsState()
 
@@ -73,7 +80,8 @@ class MainActivity : ComponentActivity() {
                         //compose the Chat screen
                         ChatScreen(
                             authViewModel = authViewModel,
-                            cloudDBViewModel = cloudDBViewModel
+                            cloudDBViewModel = cloudDBViewModel,
+                            translationViewModel = translationViewModel
                         )
 
                         //get all messages only for the 1st time, then a listener will be registered
