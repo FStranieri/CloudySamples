@@ -1,7 +1,12 @@
 package com.fs.cloudapp.composables
 
 import android.app.Activity
+import android.content.Intent
+import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResultLauncher
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,7 +34,8 @@ import com.huawei.hms.support.hwid.ui.HuaweiIdAuthButton
 
 @Composable
 fun LoginScreen(
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    googleLoginIntentLauncher: ActivityResultLauncher<Intent>
 ) {
     val currentActivity = LocalContext.current as Activity
 
@@ -61,27 +67,16 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // GOOGLE LOGIN with custom management (method 2 according to the documentation)
-            /*Button(
-                modifier = Modifier.constrainAs(googleButton) {
-                    top.linkTo(huaweiIdButton.bottom, 16.dp)
-                    linkTo(start = parent.start, end = parent.end)
-                    width = Dimension.wrapContent
-                    height = Dimension.wrapContent
-                }, // Occupy the max size in the Compose UI tree
-                onClick = {
-
-                    authViewModel.loginWithGoogle(activity)
-                }) {
-                Text(text = "GOOGLE LOGIN")
-            }*/
-
             //GOOGLE LOGIN
             GoogleLoginButton {
-                authViewModel.login(
+                //METHOD 1
+                /*authViewModel.login(
                     activity = currentActivity,
                     credentialType = AGConnectAuthCredential.Google_Provider
-                )
+                )*/
+
+                //METHOD 2
+                authViewModel.loginWithGoogle(activity = currentActivity, googleLoginIntentLauncher)
             }
 
             Spacer(modifier = Modifier.height(8.dp))

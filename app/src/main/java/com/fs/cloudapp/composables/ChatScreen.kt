@@ -44,7 +44,6 @@ import org.json.JSONObject
 /**
  * Chat screen using Cloud DB to store and read messages.
  */
-
 @Composable
 fun ChatScreen(
     authViewModel: AuthViewModel,

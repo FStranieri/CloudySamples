@@ -20,40 +20,53 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlin.Exception
 
+//renamed all the object types with more human names
 typealias Message = input_messages
 typealias User = users
 typealias FullMessage = full_messages
 typealias PollLunchChoices = poll_lunch_choices
 typealias PollLunch = poll_lunch
+typealias PushTokens = user_push_tokens
 
+/**
+ * This ViewModel includes all the functions to store and retrieve data from Cloud DB
+ */
 class CloudDBViewModel : ViewModel() {
 
+    //main object instance for Cloud DB
     private lateinit var DBInstance: AGConnectCloudDB
+
+    //DBZone object where we are storing and retrieving data
     private var DBZone: CloudDBZone? = null
 
+    //The MutableStateFlow that we need to manage the UI changes with Compose
     private val mState = MutableStateFlow(CloudState())
     val state: StateFlow<CloudState>
         get() = mState
 
+    //The userID of the user logged in the chat
     var userID: String = ""
         private set
 
+    //list of chat messages to show
     var messages: MutableLiveData<List<FullMessage>> = MutableLiveData()
         private set
 
+    //list of restaurants to choose in order to organize a lunch
     var lunchChoices: MutableLiveData<List<PollLunchChoices>> = MutableLiveData()
         private set
 
-    private var loadingProgress: MutableState<Boolean> = mutableStateOf(false)
-
+    //this listener alerts the app everytime there's a change in the full_messages Object Type
     private val mSnapshotListener = OnSnapshotListener<FullMessage> { cloudDBZoneSnapshot, err ->
         err?.let {
             Log.w(TAG, "onSnapshot: ${err.message}")
         } ?: processQueryResult(cloudDBZoneSnapshot)
     }
 
+    //temporary data about the message we are going to modify
     var messageToEdit: MutableState<FullMessage?> = mutableStateOf(null)
 
+    //create the Cloud DB instance and establish the connection with it
     fun initAGConnectCloudDB(
         context: Context,
         authInstance: AGConnectAuth
@@ -75,6 +88,7 @@ class CloudDBViewModel : ViewModel() {
         }
     }
 
+    //create an instance of the Cloud DB Zone we are going to use to store and retrieve data
     private fun openCloudZone() {
         val mConfig = CloudDBZoneConfig(
             "ChatDemo",
@@ -92,7 +106,10 @@ class CloudDBViewModel : ViewModel() {
         }
     }
 
-    //not used since when the user login is triggered, the cloud function stores the data in DB
+    /*
+    in order to save data into 'users' Object Type but It's not used since when the user login
+    is triggered, the cloud function stores the data in DB
+     */
     fun saveUser(credentials: AGConnectUser) {
         val user = User().apply {
             id = credentials.uid
@@ -112,7 +129,8 @@ class CloudDBViewModel : ViewModel() {
         }
     }
 
-    fun savePushToken(pushToken: user_push_tokens) {
+    //in order to save the push token into 'user_push_tokens' Object Type
+    fun savePushToken(pushToken: PushTokens) {
         val upsertTask = this.DBZone!!.executeUpsert(pushToken)
         upsertTask.addOnSuccessListener { cloudDBZoneResult ->
             Log.i(TAG, "Upsert $cloudDBZoneResult records")
@@ -123,6 +141,10 @@ class CloudDBViewModel : ViewModel() {
         }
     }
 
+    /*
+    in order to send message to the Cloud DB input_messages Object Type, it will start the
+    chat flow
+     */
     fun sendMessage(text: String) {
         val message = Message().apply {
             this.id = ""
@@ -134,6 +156,7 @@ class CloudDBViewModel : ViewModel() {
         sendMessageOnCloud(message)
     }
 
+    //in order to edit a message we will use the same id but with updated data
     fun editMessage(text: String, fullMessage: FullMessage) {
         val message = Message().apply {
             this.id = fullMessage.id
@@ -147,6 +170,7 @@ class CloudDBViewModel : ViewModel() {
         sendMessageOnCloud(message)
     }
 
+    //this function execute an upsert on the input_messages ObjectType
     private fun sendMessageOnCloud(message: Message) {
         val upsertTask = this.DBZone!!.executeUpsert(message)
         upsertTask.addOnSuccessListener { cloudDBZoneResult ->
@@ -157,6 +181,12 @@ class CloudDBViewModel : ViewModel() {
         }
     }
 
+    /*
+    this function execute a query to retrieve all the messages and then subscribe a listener
+    in order to get all the data changes about the same Object Type. In this way everytime we
+    have a new message and/or a deleted messages and/or an updated one, we get automatically
+    new data shown in the app
+     */
     fun getAllMessages() {
         val query = CloudDBZoneQuery.where(FullMessage::class.java)
             .equalTo("type", ObjectTypeInfoHelper.MESSAGE_TYPE_STANDARD)
@@ -183,11 +213,13 @@ class CloudDBViewModel : ViewModel() {
             }
     }
 
+    //to convert the result into a list to set in the LazyColumn
     private fun processQueryResult(snapshot: CloudDBZoneSnapshot<FullMessage>) {
         val messagesList = snapshot.toList()
         messages.postValue(messagesList.sortedBy { it.date_ins })
     }
 
+    //task to delete a message
     fun deleteMessage(message: FullMessage) {
         val deleteTask = this.DBZone!!.executeDelete(message)
         deleteTask.addOnSuccessListener {
@@ -211,6 +243,7 @@ class CloudDBViewModel : ViewModel() {
         }
     }
 
+    //this function will check if there's the user data into the related Object Type
     fun getUserDataAvailability() {
         val query = CloudDBZoneQuery.where(User::class.java)
             .equalTo("id", this.userID)
@@ -221,17 +254,23 @@ class CloudDBViewModel : ViewModel() {
         )
 
         queryTask.addOnSuccessListener { snapshot ->
-            updateState(mState.value.copy(userDataAvailable =
-            (snapshot.snapshotObjects?.size() ?: 0) > 0))
+            updateState(
+                mState.value.copy(
+                    userDataAvailable =
+                    (snapshot.snapshotObjects?.size() ?: 0) > 0
+                )
+            )
         }.addOnFailureListener {
             updateState(state.value.copy(failureOutput = it))
         }
     }
 
+    //In order to reset the failure data status after a successful retry
     fun resetFailureOutput() {
         updateState(state.value.copy(failureOutput = null))
     }
 
+    //query to retrieve all the available restaurants in the related Object Type
     private fun getPollLunchChoices() {
         val query = CloudDBZoneQuery.where(PollLunchChoices::class.java)
 
@@ -247,6 +286,7 @@ class CloudDBViewModel : ViewModel() {
         }
     }
 
+    //store the restaurant choice by the user into the related Object Type
     fun sendPollLunchChoice(pollLunchChoice: PollLunchChoices) {
         val upsertTask = this.DBZone!!.executeUpsert(PollLunch().apply {
             user_id = userID
@@ -260,6 +300,7 @@ class CloudDBViewModel : ViewModel() {
         }
     }
 
+    //with Compose we are setting the visibility of the restaurants list
     fun setLunchChoicesVisibility(visible: Boolean) {
         if (visible) {
             getPollLunchChoices()
@@ -268,6 +309,7 @@ class CloudDBViewModel : ViewModel() {
         updateState(mState.value.copy(showLunchChoices = visible))
     }
 
+    //extended function to simplify the snapshot parsing to a mutablelist ready for the LazyColumn
     private fun <T : CloudDBZoneObject> CloudDBZoneSnapshot<T>.toList() = run {
         val cursor = this.snapshotObjects
         val list = mutableListOf<T>()
@@ -285,16 +327,14 @@ class CloudDBViewModel : ViewModel() {
         list
     }
 
-    fun getLoadingProgress(): MutableState<Boolean> {
-        return loadingProgress
-    }
-
+    //actually not used in order to keep it alive
     fun closeDB() {
         if (this::DBInstance.isInitialized && this.DBZone != null) {
             this.DBInstance.closeCloudDBZone(this.DBZone)
         }
     }
 
+    //Update the MutableStateFlow data for UI changes based on events
     private fun updateState(newState: CloudState) {
         viewModelScope.launch {
             mState.emit(value = newState)
