@@ -1,6 +1,7 @@
 package com.fs.cloudapp
 
 import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -151,6 +152,12 @@ class MainActivity : ComponentActivity() {
             user_id = cloudDBViewModel.userID
             platform = 0
         })
+    }
+
+    //TODO: remove it with the new Auth Service version
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        AGConnectApi.getInstance().activityLifecycle().onActivityResult(requestCode,resultCode,data)
     }
 
     companion object {

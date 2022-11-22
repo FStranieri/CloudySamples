@@ -1,10 +1,14 @@
 <resources>
     <string name="app_name">CloudApp</string>
-    <string name="login_page_title">LOGIN</string>
+    <string name="login_page_title1">LIVE CHAT</string>
+    <string name="login_page_title2">SERVICE</string>
     <string name="chat">CHAT</string>
     <string name="send_button">SEND</string>
     <string name="enter_text_label">Write here</string>
     <string name="logout_button_text">LOGOUT</string>
     <string name="delete_message_option_text">Delete</string>
     <string name="edit_message_option_text">Edit</string>
+    <string name="huawei_login_text">Sign in with HUAWEI ID</string>
+    <string name="fb_login_text">Login with Facebook</string>
+    <string name="g_login_text">Sign in</string>
 </resources>
