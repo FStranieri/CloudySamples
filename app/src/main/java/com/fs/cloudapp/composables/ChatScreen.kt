@@ -136,7 +136,7 @@ fun ChatScreen(
                         height = Dimension.fillToConstraints
                     }
                     .padding(16.dp)
-                    .background(Color.Blue),
+                    .background(Color("#D5D5D5".toColorInt())),
                 contentAlignment = Alignment.Center
             ) {
                 LazyColumn(
@@ -262,7 +262,7 @@ fun BuildMyChatCard(message: FullMessage, cloudDBViewModel: CloudDBViewModel) {
                     onClick = { },
                     onLongClick = { showOptions = true }
                 ),
-            backgroundColor = Color("#E8D100".toColorInt()),
+            backgroundColor = Color("#C8BFE7".toColorInt()),
             elevation = 4.dp,
             shape = RoundedCornerShape(8.dp),
         ) {
@@ -274,7 +274,7 @@ fun BuildMyChatCard(message: FullMessage, cloudDBViewModel: CloudDBViewModel) {
                     onDismissRequest = { showOptions = false },
                     modifier = Modifier
                         .constrainAs(menu) {}
-                        .then(Modifier.background(color = Color("#E18701".toColorInt())))
+                        .then(Modifier.background(color = Color("#A596D8".toColorInt())))
                 ) {
                     DropdownMenuItem(onClick = {
                         cloudDBViewModel.messageToEdit.value = message
@@ -330,10 +330,9 @@ fun BuildUsersChatCard(message: FullMessage) {
                     width = Dimension.preferredWrapContent
                     height = Dimension.preferredWrapContent
                 },
-            backgroundColor = Color("#009BAF".toColorInt()),
+            backgroundColor = Color("#A596D8".toColorInt()),
             elevation = 4.dp,
-            shape = RoundedCornerShape(16.dp),
-            border = BorderStroke(2.dp, Color(message.color.toColorInt()))
+            shape = RoundedCornerShape(16.dp)
         ) {
             ConstraintLayout(
                 Modifier
@@ -417,7 +416,7 @@ fun BuildLunchPollChatCard(message: FullMessage) {
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
                 },
-            backgroundColor = Color.Blue,
+            backgroundColor = Color("#D5D5D5".toColorInt()),
             elevation = 4.dp,
             shape = RoundedCornerShape(16.dp)
         ) {
@@ -461,7 +460,7 @@ fun BuildLunchPollChatCard(message: FullMessage) {
 
                 Text(
                     text = message.formattedDate,
-                    color = Color.White,
+                    color = Color.Black,
                     fontSize = 8.sp,
                     modifier = Modifier
                         .constrainAs(date) {
@@ -532,7 +531,7 @@ fun BuildLunchPollChoice(choice: PollLunchChoices, cloudDBViewModel: CloudDBView
                     },
                     onLongClick = {}
                 ),
-            backgroundColor = Color("#E8D100".toColorInt()),
+            backgroundColor = Color("#C8BFE7".toColorInt()),
             elevation = 4.dp,
             shape = RoundedCornerShape(8.dp),
         ) {
@@ -565,7 +564,7 @@ fun BuildLunchPoll(name: String, value: Int, maxValue: Int) {
 
         Text(
             text = "$name ($value)",
-            color = Color.White,
+            color = Color.Black,
             fontSize = 16.sp,
             modifier = Modifier
                 .constrainAs(choice) {
