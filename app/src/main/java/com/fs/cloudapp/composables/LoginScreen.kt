@@ -2,27 +2,18 @@ package com.fs.cloudapp.composables
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
-import android.view.ViewGroup
-import androidx.activity.ComponentActivity
+import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Icon
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.paint
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -36,14 +27,19 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.core.graphics.toColorInt
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.fs.cloudapp.R
-import com.fs.cloudapp.viewmodels.AuthViewModel
+import com.fs.cloudapp.TAG
+import com.fs.cloudapp.repositories.AuthRepository
 import com.huawei.agconnect.auth.AGConnectAuthCredential
+import com.sebaslogen.resaca.viewModelScoped
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.launch
 
 /**
  * Login screen, using Auth Service it's possible to login with 3rd party providers,
@@ -54,8 +50,11 @@ import com.huawei.agconnect.auth.AGConnectAuthCredential
 
 @Composable
 fun LoginScreen(
-    authViewModel: AuthViewModel,
-    googleLoginIntentLauncher: ActivityResultLauncher<Intent>
+    googleSignInResultLauncher: ActivityResultLauncher<Intent>,
+    authRepository: AuthRepository,
+    viewModel: LoginViewModel = viewModelScoped {
+        LoginViewModel(authRepository)
+    }
 ) {
     val currentActivity = LocalContext.current as Activity
 
@@ -123,7 +122,7 @@ fun LoginScreen(
 
                 // HUAWEI ID LOGIN
                 HuaweiLoginIdButton {
-                    authViewModel.login(
+                    viewModel.login(
                         activity = currentActivity,
                         credentialType = AGConnectAuthCredential.HMS_Provider
                     )
@@ -132,17 +131,19 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 //GOOGLE LOGIN
-                GoogleLoginButton {
-                    //METHOD 1
-                    /*authViewModel.login(
-                    activity = currentActivity,
-                    credentialType = AGConnectAuthCredential.Google_Provider
-                )*/
-
+                GoogleLoginButton(" via direct") {
                     //METHOD 2
-                    authViewModel.loginWithGoogle(
+                    viewModel.initiateDirectLoginWithGoogle(
                         activity = currentActivity,
-                        googleLoginIntentLauncher
+                        googleSignInResultLauncher
+                    )
+                }
+
+                GoogleLoginButton(" via AGC") {
+                    //METHOD 1
+                    viewModel.login(
+                        activity = currentActivity,
+                        credentialType = AGConnectAuthCredential.Google_Provider
                     )
                 }
 
@@ -150,7 +151,7 @@ fun LoginScreen(
 
                 // FACEBOOK LOGIN
                 FacebookLoginButton {
-                    authViewModel.login(
+                    viewModel.login(
                         activity = currentActivity,
                         credentialType = AGConnectAuthCredential.Facebook_Provider
                     )
@@ -163,6 +164,7 @@ fun LoginScreen(
 
 @Composable
 private fun GoogleLoginButton(
+    extraTitle: String,
     onClickLogin: () -> Unit
 ) {
     Button(
@@ -187,7 +189,7 @@ private fun GoogleLoginButton(
                 tint = Color.Unspecified
             )
             Text(
-                text = stringResource(R.string.g_login_text),
+                text = stringResource(R.string.g_login_text) + extraTitle,
                 color = Color("#000000".toColorInt()),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.constrainAs(text) {
@@ -334,4 +336,26 @@ private fun HuaweiLoginIdButton(
                 setOnClickListener { onClickLogin() }
             }
         })*/
+}
+
+
+class LoginViewModel(
+    private val authRepository: AuthRepository
+) : ViewModel() {
+    
+    private val genericExceptionHandler =
+        CoroutineExceptionHandler { _, e -> Log.e(this.TAG, e.toString()) }
+
+    fun login(activity: Activity, credentialType: Int) {
+        viewModelScope.launch(genericExceptionHandler) {
+            authRepository.login(activity, credentialType)
+        }
+    }
+
+    fun initiateDirectLoginWithGoogle(
+        activity: Activity,
+        googleLoginIntentLauncher: ActivityResultLauncher<Intent>
+    ) {
+        authRepository.initiateDirectLoginWithGoogle(activity, googleLoginIntentLauncher)
+    }
 }

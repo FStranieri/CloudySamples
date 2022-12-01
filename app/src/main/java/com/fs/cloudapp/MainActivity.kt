@@ -4,24 +4,28 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.*
-import com.fs.cloudapp.composables.LoginScreen
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.CreationExtras
 import com.fs.cloudapp.composables.ChatScreen
-import com.fs.cloudapp.data.user_push_tokens
-import com.fs.cloudapp.viewmodels.AuthViewModel
-import com.fs.cloudapp.viewmodels.CloudDBViewModel
+import com.fs.cloudapp.composables.LoginScreen
+import com.fs.cloudapp.repositories.AuthRepository
+import com.fs.cloudapp.repositories.CloudDBRepository
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.gms.tasks.Task
 import com.huawei.agconnect.api.AGConnectApi
 import com.huawei.agconnect.auth.GoogleAuthProvider
-import com.huawei.hms.aaid.HmsInstanceId
-import com.huawei.hms.common.ApiException
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 /**
 This is the activity including all the flows starting from the authentication flow
@@ -29,138 +33,103 @@ up to the chat flow
  **/
 class MainActivity : ComponentActivity() {
 
-    //Google login token with the METHOD 2
-    private var googleLoginToken: MutableState<String> = mutableStateOf("")
+    private val viewModel: MainViewModel by viewModels { MainViewModelFactory }
 
-    //Google login activity result with METHOD 2
-    private val googleLoginIntentLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private val googleSignInResultLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            viewModel.onGoogleSignInLaunchResult(it)
+        }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        setContent {
+            val authState by viewModel.loginState.collectAsState()
+
+            when (authState) {
+                is AuthRepository.AuthState.LoggedIn -> {
+                    ChatScreen(viewModel.cloudDBRepository, viewModel.authRepository)
+                }
+                AuthRepository.AuthState.LoggedOut -> {
+                    // screen with the login options
+                    LoginScreen(googleSignInResultLauncher, viewModel.authRepository)
+                }
+            }
+        }
+    }
+
+
+    //TODO: remove it with the new Auth Service version
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        Log.d(TAG, "Call to deprecated onActivityResult")
+        AGConnectApi.getInstance().activityLifecycle()
+            .onActivityResult(requestCode, resultCode, data)
+    }
+}
+
+class MainViewModel(
+    application: MainApplication
+) : ViewModel() {
+
+    val authRepository = application.authRepository
+    val cloudDBRepository = application.cloudDBRepository
+    private val pushTokenRepository = application.pushTokenRepository
+
+    val loginState = authRepository.observeLoginState()
+
+    private val genericExceptionHandler =
+        CoroutineExceptionHandler { _, e -> Log.e(this.TAG, e.toString()) }
+
+    init {
+        viewModelScope.launch(genericExceptionHandler) {
+            // at every successful login, fetch a push token and send it to the cloud
+            authRepository.observeLoginState().filter {
+                it is AuthRepository.AuthState.LoggedIn
+            }.collect {
+                savePushTokenToCloud()
+            }
+        }
+    }
+
+    private suspend fun savePushTokenToCloud() {
+        val pushToken = pushTokenRepository.getPushToken()
+        cloudDBRepository.observeConnectionState()
+            .first { it is CloudDBRepository.CloudState.Connected }
+        cloudDBRepository.savePushToken(pushToken)
+    }
+
+    fun onGoogleSignInLaunchResult(result: ActivityResult) {
         if (result.resultCode == Activity.RESULT_OK) {
-            val task: Task<GoogleSignInAccount> =
-                GoogleSignIn.getSignedInAccountFromIntent(result.data)
-            task.addOnSuccessListener { googleSignInAccount ->
-                googleLoginToken.value = googleSignInAccount!!.idToken!!
-            }.addOnFailureListener {
-                Log.e(TAG, "error: ${it.message}")
+            Log.d(TAG, "Google direct SignIn result OK -> proceed with token")
+            viewModelScope.launch(genericExceptionHandler) {
+                val googleSignInToken =
+                    GoogleSignIn.getSignedInAccountFromIntent(result.data).await().idToken
+                val googleCredentials = GoogleAuthProvider.credentialWithToken(googleSignInToken)
+                authRepository.loginWithCredentials(googleCredentials)
             }
         } else {
+            Log.d(TAG, "Google direct SignIn result failed -> proceed with AGC")
             AGConnectApi.getInstance()
                 .activityLifecycle()
                 .onActivityResult(
-                    AuthViewModel.GOOGLE_SIGN_IN,
+                    AuthRepository.GOOGLE_SIGN_IN,
                     result.resultCode,
                     result.data
                 )
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
 
-        setContent {
-            val authViewModel: AuthViewModel by viewModels()
-            val cloudDBViewModel: CloudDBViewModel by viewModels()
+}
 
-            //listen for authentication flow updates
-            val authState by authViewModel.state.collectAsState()
-
-            //listen for cloud DB status updates
-            val cloudState by cloudDBViewModel.state.collectAsState()
-
-            //listen for google login flow updates with METHOD 2
-            val googleToken = remember { googleLoginToken }.value
-
-            //listen for authentication flow errors
-            authState.failureOutput?.let {
-                Toast.makeText(this, it.message, Toast.LENGTH_LONG).show()
-                authViewModel.resetFailureOutput()
-            }
-
-            //listen for cloud db status errors
-            cloudState.failureOutput?.let {
-                Toast.makeText(this, it.message, Toast.LENGTH_SHORT).show()
-                cloudDBViewModel.resetFailureOutput()
-            }
-
-            //method 2 for login, disabled by default, just as example of usage
-            if (googleToken.isNotEmpty()) {
-                authViewModel.loginWithCredentials(
-                    GoogleAuthProvider.credentialWithToken(googleToken))
-                googleLoginToken.value = ""
-            }
-
-            //if loggedIn, initialize the CloudDB instance with the user credentials
-            if (authState.loggedIn) {
-                cloudDBViewModel.initAGConnectCloudDB(
-                    this,
-                    authViewModel.authInstance
-                )
-
-                //if the db is initialized continue with the flow
-                if (cloudState.dbReady) {
-                    if (!cloudState.userDataAvailable) {
-                        cloudDBViewModel.getUserDataAvailability()
-                    } else {
-                        //store the user credentials ONLY if it's the very 1st login
-                        if (!authState.previousInstanceAlive) {
-                            getPushToken(cloudDBViewModel)
-                        }
-
-                        //compose the Chat screen
-                        ChatScreen(
-                            authViewModel = authViewModel,
-                            cloudDBViewModel = cloudDBViewModel
-                        )
-
-                        //get all messages only for the 1st time, then a listener will be registered
-                        cloudDBViewModel.getAllMessages()
-                    }
-                }
-            } else {
-                // screen with the login options
-                LoginScreen(authViewModel = authViewModel, googleLoginIntentLauncher)
-            }
-        }
-    }
-
-    // Register the push token for push notifications
-    private fun getPushToken(cloudDBViewModel: CloudDBViewModel) {
-        // Create a thread.
-        object : Thread() {
-            override fun run() {
-                try {
-                    // Obtain the app ID from the agconnect-services.json file.
-                    val appId = getString(R.string.app_id)
-                    val token = HmsInstanceId.getInstance(this@MainActivity).getToken(appId, "HCM")
-                    Log.i(TAG, "get token:$token")
-
-                    // Check whether the token is null.
-                    if (token?.isNotEmpty() == true) {
-                        sendRegTokenToServer(token, cloudDBViewModel)
-                    }
-                } catch (e: ApiException) {
-                    Log.e(TAG, "get token failed, $e")
-                }
-            }
-        }.start()
-    }
-
-    // Save the token into a Cloud DB Object Type
-    private fun sendRegTokenToServer(token: String, cloudDBViewModel: CloudDBViewModel) {
-        Log.i(TAG, "sending token to server. token:$token")
-        cloudDBViewModel.savePushToken(user_push_tokens().apply {
-            setToken(token)
-            user_id = cloudDBViewModel.userID
-            platform = 0
-        })
-    }
-
-    //TODO: remove it with the new Auth Service version
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        AGConnectApi.getInstance().activityLifecycle().onActivityResult(requestCode,resultCode,data)
-    }
-
-    companion object {
-        const val TAG = "MainActivity"
+object MainViewModelFactory : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+        val application = checkNotNull(extras[APPLICATION_KEY]) as MainApplication
+        return MainViewModel(application) as T
     }
 }
+
+
+

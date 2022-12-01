@@ -19,8 +19,4 @@ class HUAWEIPushService: HmsMessageService() {
     private fun refreshedTokenToServer(token: String) {
         Log.i(TAG, "sending token to server. token:$token")
     }
-
-    companion object {
-        const val TAG = "HUAWEIPushService"
-    }
 }
