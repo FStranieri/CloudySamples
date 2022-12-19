@@ -18,7 +18,7 @@ chat scenario.
 1) Follow the setup at this [link](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-auth-creat-project-and-app-0000001324725529) ;
 2) in order to support the HUAWEI ID login, you MUST enable the 'Account Kit' API under the 'MANAGE API' section on AGC Console;
 3) create an 'ids.xml' file under 'res/values' folder with the ids needed for [Google](https://developers.google.com/identity/sign-in/android/start-integrating#configure_a_project) and [Facebook](https://developers.facebook.com/docs/android/getting-started#app-id) login providers;
-4) import the ObjectTypes into your Cloud DB section following this [guide](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-clouddb-agcconsole-objecttypes-0000001127675459#section3873193085413);
+4) import the [ObjectTypes](https://github.com/FStranieri/CloudySamples/blob/main/ObjectTypes.json) into your Cloud DB section following this [guide](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-clouddb-agcconsole-objecttypes-0000001127675459#section3873193085413);
 5) import the following Cloud Functions to your project -> [link](https://github.com/FStranieri/chat_sample_cloud_functions)
 
 # ViewModels
