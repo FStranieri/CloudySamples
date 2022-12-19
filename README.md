@@ -3,15 +3,23 @@
 Simple serverless chat app including a login screen and the chat screen, intended to cover a group
 chat scenario.
 
-- Login screen, using Auth Service it's possible to login with 3rd party providers, your own server
+- Login screen, using [Auth Service](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-auth-introduction-0000001053732605) it's possible to login with 3rd party providers, your own server
   or anonymously. The credentials are already stored into Auth Service but we are saving them on
-  Cloud DB too in order to manipulate the info for the chat.
+  [Cloud DB](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-clouddb-overview-0000001127558223) too in order to manipulate the info for the chat. The whole business logic is managed by the [Cloud Functions](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-cloudfunction-introduction-0000001059279544) .
 
 ![](https://github.com/FStranieri/CloudySamples/blob/main/login_screen.png)
 
 - Chat screen using Cloud DB to store and read messages.
 
 ![](https://github.com/FStranieri/CloudySamples/blob/main/chat_screen.png)
+
+# SETUP
+
+1) Follow the setup at this [link](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-auth-creat-project-and-app-0000001324725529) ;
+2) in order to support the HUAWEI ID login, you MUST enable the 'Account Kit' API under the 'MANAGE API' section on AGC Console;
+3) create an 'ids.xml' file under 'res/values' folder with the ids needed for [Google](https://developers.google.com/identity/sign-in/android/start-integrating#configure_a_project) and [Facebook](https://developers.facebook.com/docs/android/getting-started#app-id) login providers;
+4) import the ObjectTypes into your Cloud DB section following this [guide](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-clouddb-agcconsole-objecttypes-0000001127675459#section3873193085413);
+5) import the following Cloud Functions to your project -> [link](https://github.com/FStranieri/chat_sample_cloud_functions)
 
 # ViewModels
 
@@ -31,7 +39,8 @@ chat scenario.
 
 # Cloud Functions
 
-Sample project -> [link](https://github.com/FStranieri/CloudySamples_CloudFunction)
+Sample Cloud Function project -> [link](https://github.com/FStranieri/CloudySamples_CloudFunction)
+The Cloud Functions used for the chat app -> [link](https://github.com/FStranieri/chat_sample_cloud_functions)
 
 # Login flow:
 
@@ -65,15 +74,3 @@ the same of the record we want to modify.
 
 invoke the [deleteMessage(..)] function from [CloudDBViewModel] passing the [full_message] data
 we want to delete
-
-# SETUP:
-
-1) Follow the Auth Service getting started
-   guide: [link](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-auth-android-getstarted-0000001053053922)
-   and enable the 3rd party login providers you want to support;
-2) Follow the CloudDB getting started
-   guide: [link](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-clouddb-get-started-0000001127676473)
-   and add your tables with the data you want (remember to export the tables as models in your app
-   project);
-3) add an ids.xml file into the 'values' folder with the info of the 3rd party login providers you
-   want to support in your app
