@@ -45,8 +45,8 @@ The Cloud Functions used for the chat app -> [link](https://github.com/FStranier
 
 # Login flow:
 
-1) the [AuthViewModel](https://github.com/FStranieri/CloudySamples/blob/main/app/src/main/java/com/fs/cloudapp/viewmodels/AuthViewModel.kt) will check if the user is already logged in jump to step 7;
-2) if the user is not logged in, it clicks on a 3rd party login provider;
+1) the `AuthViewModel` will check if the user is already logged in jump to `step 7`;
+2) if the user is not logged in, it clicks on a 3rd party login provider (in this project we use `HUAWEI ID`, `Google`, `Facebook`);
 3) the [login()](https://github.com/FStranieri/CloudySamples/blob/main/app/src/main/java/com/fs/cloudapp/viewmodels/AuthViewModel.kt#L61) function from `AuthViewModel` will be invoked;
 4) with the login, the [AUTH TRIGGER](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-cloudfunction-authtrigger-0000001300868052) on AGConnect Console will be fired, starting a Cloud Function;
 5) the Cloud Function will set a random color for the user and then stores user data into the Cloud
@@ -73,7 +73,7 @@ the same of the record we want to modify.
 
 # Delete Message flow:
 
-Invoke the [deleteMessage()](https://github.com/FStranieri/CloudySamples/blob/main/app/src/main/java/com/fs/cloudapp/viewmodels/CloudDBViewModel.kt#L223) function from [CloudDBViewModel] passing the `full_messages` data
+Invoke the [deleteMessage()](https://github.com/FStranieri/CloudySamples/blob/main/app/src/main/java/com/fs/cloudapp/viewmodels/CloudDBViewModel.kt#L223) function from `CloudDBViewModel` passing the `full_messages` data
 we want to delete.
 
 # Technical Support
