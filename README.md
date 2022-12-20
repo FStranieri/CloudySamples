@@ -9,6 +9,23 @@ chat scenario.
 
 - Chat screen using [HUAWEI Cloud DB](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-clouddb-overview-0000001127558223) to store and read messages.
 
+# What You Will Need
+
+## Hardware Requirements
+
+- A computer that can run Android Studio.
+- Android mobile device with a USB data cable for running developed apps
+
+## Software Requirements
+
+- Java JDK 1.8 or later
+- Android Studio 2021.3.x or later
+- Android SDK package
+- Android API Level 21 or higher
+- For login with HUAWEI ID, you need HMS Core (APK) 5.0.0.300 or later
+- For login with Google, you Google Play Services  15.0.0 or later
+- Android 5.0 or later
+
 # SETUP
 
 1) Follow the setup at this [link](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-auth-creat-project-and-app-0000001324725529) ;
