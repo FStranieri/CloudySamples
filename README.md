@@ -1,17 +1,13 @@
 # CHAT APP
 
-Simple serverless chat app including a login screen and the chat screen, intended to cover a group
+Simple serverless Chat App using the HUAWEI Serverless services capabilities, including a login screen and the chat screen, intended to cover a group
 chat scenario.
 
-- Login screen, using [Auth Service](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-auth-introduction-0000001053732605) it's possible to login with 3rd party providers, your own server
+- Login screen, using [HUAWEI Auth Service](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-auth-introduction-0000001053732605) it's possible to login with 3rd party providers, your own server
   or anonymously. The credentials are already stored into Auth Service but we are saving them on
-  [Cloud DB](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-clouddb-overview-0000001127558223) too in order to manipulate the info for the chat. The whole business logic is managed by the [Cloud Functions](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-cloudfunction-introduction-0000001059279544) .
+  [HUAWEI Cloud DB](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-clouddb-overview-0000001127558223) too in order to manipulate the info for the chat. The whole business logic is managed by the [HUAWEI Cloud Functions](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-cloudfunction-introduction-0000001059279544) 
 
-![](https://github.com/FStranieri/CloudySamples/blob/main/login_screen.png)
-
-- Chat screen using Cloud DB to store and read messages.
-
-![](https://github.com/FStranieri/CloudySamples/blob/main/chat_screen.png)
+- Chat screen using [HUAWEI Cloud DB](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-clouddb-overview-0000001127558223) to store and read messages.
 
 # SETUP
 
@@ -20,6 +16,10 @@ chat scenario.
 3) create an 'ids.xml' file under 'res/values' folder with the ids needed for [Google](https://developers.google.com/identity/sign-in/android/start-integrating#configure_a_project) and [Facebook](https://developers.facebook.com/docs/android/getting-started#app-id) login providers;
 4) import the [ObjectTypes](https://github.com/FStranieri/CloudySamples/blob/main/ObjectTypes.json) into your Cloud DB section following this [guide](https://developer.huawei.com/consumer/en/doc/development/AppGallery-connect-Guides/agc-clouddb-agcconsole-objecttypes-0000001127675459#section3873193085413);
 5) import the following Cloud Functions to your project -> [link](https://github.com/FStranieri/chat_sample_cloud_functions)
+
+# Screenshots
+
+<img src="https://github.com/FStranieri/CloudySamples/blob/main/login_screen.png" data-canonical-src="https://github.com/FStranieri/CloudySamples/blob/main/login_screen.png" width="200" />  <img src="https://github.com/FStranieri/CloudySamples/blob/main/chat_screen.png" data-canonical-src="https://github.com/FStranieri/CloudySamples/blob/main/chat_screen.png" width="200" />
 
 # ViewModels
 
