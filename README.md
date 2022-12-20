@@ -60,7 +60,7 @@ Sample Cloud Function project -> [link](https://github.com/FStranieri/CloudySamp
 
 The Cloud Functions used for the chat app -> [link](https://github.com/FStranieri/chat_sample_cloud_functions)
 
-# Login flow:
+# Login Flow
 
 1) the `AuthViewModel` will check if the user is already logged in jump to `step 7`;
 2) if the user is not logged in, it clicks on a 3rd party login provider (in this project we use `HUAWEI ID`, `Google`, `Facebook`);
@@ -73,7 +73,7 @@ The Cloud Functions used for the chat app -> [link](https://github.com/FStranier
 9) a jetpack compose logic with a mutablestate [userDataAvailable](https://github.com/FStranieri/CloudySamples/blob/main/app/src/main/java/com/fs/cloudapp/MainActivity.kt#L109) will redirect to the chat
    screen
 
-# Send Message flow:
+# Send Message Flow
 
 1) user sends a `input_messages` object to Cloud DB using the [sendMessage()](https://github.com/FStranieri/CloudySamples/blob/main/app/src/main/java/com/fs/cloudapp/viewmodels/CloudDBViewModel.kt#L148) function;
 2) on Cloud DB there's a configured trigger that runs a Cloud Function in order to create a new
@@ -83,12 +83,12 @@ The Cloud Functions used for the chat app -> [link](https://github.com/FStranier
    [subscribeSnapshot()](https://github.com/FStranieri/CloudySamples/blob/main/app/src/main/java/com/fs/cloudapp/viewmodels/CloudDBViewModel.kt#L205) function, the list will add the message card as soon as the listener
    notifies it.
 
-# Edit Message flow:
+# Edit Message Flow
 
 Pretty similar to the 'Send Message flow' with the function [editMessage()](https://github.com/FStranieri/CloudySamples/blob/main/app/src/main/java/com/fs/cloudapp/viewmodels/CloudDBViewModel.kt#L160) only taking care about the primary key which needs to be
 the same of the record we want to modify.
 
-# Delete Message flow:
+# Delete Message Flow
 
 Invoke the [deleteMessage()](https://github.com/FStranieri/CloudySamples/blob/main/app/src/main/java/com/fs/cloudapp/viewmodels/CloudDBViewModel.kt#L223) function from `CloudDBViewModel` passing the `full_messages` data
 we want to delete.
