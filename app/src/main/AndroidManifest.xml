@@ -20,6 +20,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.CloudApp"
+        android:name=".MainApplication"
         tools:targetApi="31">
         <meta-data
             android:name="com.facebook.sdk.ApplicationId"
