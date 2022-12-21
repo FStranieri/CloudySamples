@@ -109,12 +109,13 @@ fun ChatScreen(
                         width = Dimension.fillToConstraints
                         height = Dimension.fillToConstraints
                     }
-                    .padding(16.dp), contentAlignment = Alignment.Center) {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(bottom = 70.dp),
-                        state = lazyListState
-                    ) {
+                    .padding(16.dp)
+                    .background(Color("#D5D5D5".toColorInt())),
+                contentAlignment = Alignment.Center
+            ) {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
 
                         items(messagesValue.toList(), key = {
                             it
@@ -277,8 +278,11 @@ fun BuildMyChatCard(
                     width = Dimension.preferredWrapContent
                     height = Dimension.preferredWrapContent
                 }
-                .combinedClickable(onClick = { }, onLongClick = { showOptions = true }),
-            backgroundColor = Color("#E8D100".toColorInt()),
+                .combinedClickable(
+                    onClick = { },
+                    onLongClick = { showOptions = true }
+                ),
+            backgroundColor = Color("#C8BFE7".toColorInt()),
             elevation = 4.dp,
             shape = RoundedCornerShape(8.dp),
         ) {
@@ -289,7 +293,8 @@ fun BuildMyChatCard(
                     onDismissRequest = { showOptions = false },
                     modifier = Modifier
                         .constrainAs(menu) {}
-                        .then(Modifier.background(color = Color("#E18701".toColorInt())))) {
+                        .then(Modifier.background(color = Color("#A596D8".toColorInt())))
+                ) {
                     DropdownMenuItem(onClick = {
                         onEdit.invoke()
                         showOptions = false
@@ -340,10 +345,9 @@ fun BuildUsersChatCard(message: FullMessage) {
                     width = Dimension.preferredWrapContent
                     height = Dimension.preferredWrapContent
                 },
-            backgroundColor = Color("#009BAF".toColorInt()),
+            backgroundColor = Color("#A596D8".toColorInt()),
             elevation = 4.dp,
-            shape = RoundedCornerShape(16.dp),
-            border = BorderStroke(2.dp, Color(message.color.toColorInt()))
+            shape = RoundedCornerShape(16.dp)
         ) {
             ConstraintLayout(
                 Modifier
@@ -419,7 +423,10 @@ fun BuildLunchPollChatCard(message: FullMessage) {
                 .constrainAs(card) {
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
-                }, backgroundColor = Color.Blue, elevation = 4.dp, shape = RoundedCornerShape(16.dp)
+                },
+            backgroundColor = Color("#D5D5D5".toColorInt()),
+            elevation = 4.dp,
+            shape = RoundedCornerShape(16.dp)
         ) {
             ConstraintLayout(
                 Modifier
@@ -454,9 +461,9 @@ fun BuildLunchPollChatCard(message: FullMessage) {
                             bottom.linkTo(pic.bottom)
                         }
                         .then(Modifier.padding(4.dp)))
-
-                Text(text = message.formattedDate,
-                    color = Color.White,
+                Text(
+                    text = message.formattedDate,
+                    color = Color.Black,
                     fontSize = 8.sp,
                     modifier = Modifier
                         .constrainAs(date) {
@@ -516,8 +523,14 @@ fun BuildLunchPollChoice(choice: PollLunchChoice, onClick: () -> Unit) {
                     width = Dimension.preferredWrapContent
                     height = Dimension.preferredWrapContent
                 }
-                .combinedClickable(onClick = onClick, onLongClick = {}),
-            backgroundColor = Color("#E8D100".toColorInt()),
+                .combinedClickable(
+                    onClick = {
+                        cloudDBViewModel.setLunchChoicesVisibility(false)
+                        cloudDBViewModel.sendPollLunchChoice(choice)
+                    },
+                    onLongClick = {}
+                ),
+            backgroundColor = Color("#C8BFE7".toColorInt()),
             elevation = 4.dp,
             shape = RoundedCornerShape(8.dp),
         ) {
@@ -545,9 +558,9 @@ fun BuildLunchPollChoice(choice: PollLunchChoice, onClick: () -> Unit) {
 fun BuildLunchPoll(name: String, value: Int, maxValue: Int) {
     ConstraintLayout(Modifier.wrapContentSize()) {
         val (choice, progress) = createRefs()
-
-        Text(text = "$name ($value)",
-            color = Color.White,
+        Text(
+            text = "$name ($value)",
+            color = Color.Black,
             fontSize = 16.sp,
             modifier = Modifier.constrainAs(choice) {
                 start.linkTo(parent.start)
